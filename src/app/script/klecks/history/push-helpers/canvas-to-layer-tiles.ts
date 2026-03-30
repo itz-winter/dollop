@@ -4,6 +4,7 @@ import { getTileFromCanvas } from './get-tile-from-canvas';
 import { getChangedTiles } from './changed-tiles';
 import { createImageDataTile } from '../image-data-tile';
 import { TIndexBounds } from '../../../bb/bb-types';
+import { getImageDataSafely } from '../../../bb/base/canvas';
 
 export function canvasAndChangedTilesToLayerTiles(
     canvas: HTMLCanvasElement,
@@ -40,7 +41,12 @@ export function canvasToLayerTiles(
     } else {
         // only do a single read back
         const ctx = canvas.getContext('2d')!;
-        const fullImageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        /*
+            Uncaught SecurityError: Failed to execute 'getImageData' on 'CanvasRenderingContext2D': The canvas has been tainted by cross-origin data.
+            Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
+            -> no idea how this was achieved. Tried importing svg with cross-origin content. Did not result in that exception
+         */
+        const fullImageData = getImageDataSafely(ctx, 0, 0, canvas.width, canvas.height);
         const tilesX = Math.ceil(canvas.width / HISTORY_TILE_SIZE);
         const tilesY = Math.ceil(canvas.height / HISTORY_TILE_SIZE);
         const result: THistoryEntryLayerTile[] = [];

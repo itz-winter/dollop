@@ -479,6 +479,20 @@ export function getCanvasBounds(
     };
 }
 
+export function getImageDataSafely(
+    ctx: CanvasRenderingContext2D,
+    x: number,
+    y: number,
+    width: number,
+    height: number,
+): ImageData {
+    try {
+        return ctx.getImageData(x, y, width, height);
+    } catch (e) {
+        return new ImageData(width, height);
+    }
+}
+
 export function htmlCanvasToBlobAsync(canvas: HTMLCanvasElement, mimeType: string): Promise<Blob> {
     return new Promise<Blob>((resolve, reject) => {
         canvas.toBlob((blob) => {

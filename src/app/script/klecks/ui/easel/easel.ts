@@ -486,7 +486,7 @@ export class Easel<GToolId extends string> {
             if (this.isFrozen) {
                 return;
             }
-            if (!this.rootEl.contains(e.target as Node)) {
+            if (!(e.target instanceof Node && this.rootEl.contains(e.target))) {
                 this.getActiveTool().onClickOutside?.();
             }
         };
@@ -515,22 +515,25 @@ export class Easel<GToolId extends string> {
                     this.scale(newScale / oldScale);
                 }
                 if (
-                    this.keyListener.getComboStr() !== 'shift' &&
+                    comboStr !== 'shift' &&
                     this.keyListener.comboOnlyContains(['shift', 'left', 'right', 'up', 'down'])
                 ) {
+                    const arrowKey = comboStr
+                        .split('+')
+                        .find((item) => item !== 'shift')! as TArrowKey;
                     const activeTool = this.getActiveTool();
-                    if (!activeTool.onArrowKeys?.(keyStr as TArrowKey)) {
+                    if (!activeTool.onArrowKeys?.(arrowKey)) {
                         const stepSize = 40;
-                        if (keyStr === 'left') {
+                        if (arrowKey === 'left') {
                             this.translate(stepSize, 0);
                         }
-                        if (keyStr === 'right') {
+                        if (arrowKey === 'right') {
                             this.translate(-stepSize, 0);
                         }
-                        if (keyStr === 'up') {
+                        if (arrowKey === 'up') {
                             this.translate(0, stepSize);
                         }
-                        if (keyStr === 'down') {
+                        if (arrowKey === 'down') {
                             this.translate(0, -stepSize);
                         }
                     }

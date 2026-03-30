@@ -24,17 +24,8 @@ export const filterCropExtend = {
         if (!klCanvas) {
             return false;
         }
-        const tempCanvas = BB.canvas();
-        {
-            const fit = BB.fitInto(klCanvas.getWidth(), klCanvas.getHeight(), 560, 400, 1);
-            const w = parseInt('' + fit.width),
-                h = parseInt('' + fit.height);
-            const previewFactor = w / klCanvas.getWidth();
-            tempCanvas.width = w;
-            tempCanvas.height = h;
-            tempCanvas.style.display = 'block';
-            BB.ctx(tempCanvas).drawImage(klCanvas.getCompleteCanvas(previewFactor), 0, 0, w, h);
-        }
+        const tempCanvas = klCanvas.getCompleteCanvas(1);
+        tempCanvas.style.display = 'block';
 
         const rootEl = BB.el();
         const result: TFilterGetDialogResult<TFilterCropExtendInput> = {
@@ -289,6 +280,7 @@ export const filterCropExtend = {
 
             tempCanvas.style.width = klCanvas.getWidth() * scale + 'px';
             tempCanvas.style.height = klCanvas.getHeight() * scale + 'px';
+            tempCanvas.style.imageRendering = scale >= 1 ? 'pixelated' : '';
 
             offsetWrapper.style.left = offset.x - transform.x * scale + 'px';
             offsetWrapper.style.top = offset.y - transform.y * scale + 'px';

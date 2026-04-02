@@ -338,18 +338,21 @@ export class LayersUi {
                 callback: (sliderValue, isFirst, isLast) => {
                     if (isFirst) {
                         oldOpacity = this.klCanvas.getLayerOld(layer.spot)!.opacity;
-                        this.klHistory.pause(true);
                         return;
                     }
                     if (isLast) {
-                        this.klHistory.pause(false);
                         if (oldOpacity !== sliderValue) {
                             this.klCanvas.setOpacity(layer.spot, sliderValue);
                         }
                         return;
                     }
                     layer.opacityLabel.innerHTML = Math.round(sliderValue * 100) + '%';
-                    this.klCanvas.setOpacity(layer.spot, sliderValue);
+                    this.klHistory.pause(true);
+                    try {
+                        this.klCanvas.setOpacity(layer.spot, sliderValue);
+                    } finally {
+                        this.klHistory.pause(false);
+                    }
                     this.onUpdateProject();
                 },
             });

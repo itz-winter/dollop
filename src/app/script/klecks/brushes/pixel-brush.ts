@@ -147,7 +147,10 @@ export class PixelBrush {
         ) {
             this.ditherCtx.fillRect(this.ditherArr[i][0], this.ditherArr[i][1], 1, 1);
         }
-        this.ditherPattern = throwIfNull(this.context.createPattern(this.ditherCanvas, 'repeat'));
+        this.ditherPattern = throwIfNull(
+            // InvalidStateError: The object is in an invalid state.
+            this.context.createPattern(this.ditherCanvas, 'repeat'),
+        );
     }
 
     /**
@@ -431,6 +434,9 @@ export class PixelBrush {
     }
 
     endLine(): void {
+        if (!this.inputIsDrawing) {
+            return;
+        }
         this.selection = this.klHistory.getComposed().selection.value;
         this.selectionPath = this.selection ? getSelectionPath2d(this.selection) : undefined;
         const localSize = this.settingHasSizePressure

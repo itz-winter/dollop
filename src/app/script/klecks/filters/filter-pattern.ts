@@ -1,10 +1,5 @@
 import { BB } from '../../bb/bb';
-import {
-    TFilterApply,
-    TFilterGetDialogParam,
-    TFilterGetDialogResult,
-    TKlBasicLayer,
-} from '../kl-types';
+import { TFilterApply, TFilterGetDialogParam, TFilterGetDialogResult, TKlBasicLayer } from '../kl-types';
 import { input } from '../ui/components/input';
 import { KlSlider } from '../ui/components/kl-slider';
 import { LANG } from '../../language/language';
@@ -127,6 +122,7 @@ function drawPattern(context: CanvasRenderingContext2D, settings: TFilterPattern
 
     context.clearRect(0, 0, context.canvas.width, context.canvas.height);
     context.translate(settings.offsetX - blendOffsetX, settings.offsetY - blendOffsetY);
+    // InvalidStateError: The object is in an invalid state.
     context.fillStyle = throwIfNull(context.createPattern(finalPatternCanvas, 'repeat'));
     context.fillRect(
         -settings.offsetX + blendOffsetX,

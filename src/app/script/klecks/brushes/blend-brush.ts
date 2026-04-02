@@ -187,12 +187,14 @@ export class BlendBrush {
                 // not touched, or already copied
                 return;
             }
+            // Uncaught TypeError: Cannot read properties of undefined (reading 'tiles')
             const composedTile = composedLayer.tiles[i];
             if (isLayerFill(composedTile)) {
                 const canvas = BB.canvas(HISTORY_TILE_SIZE, HISTORY_TILE_SIZE);
                 const ctx = BB.ctx(canvas);
                 ctx.fillStyle = composedTile.fill;
                 ctx.fillRect(0, 0, HISTORY_TILE_SIZE, HISTORY_TILE_SIZE);
+                // InvalidStateError: The object is in an invalid state.
                 this.cells[i] = ctx.getImageData(0, 0, HISTORY_TILE_SIZE, HISTORY_TILE_SIZE);
             } else {
                 this.cells[i] = copyImageData(composedTile.data);
@@ -558,7 +560,9 @@ export class BlendBrush {
         });
         this.drawBuffer = [];
 
-        this.localColOld = localColNew!;
+        if (this.blending !== 0) {
+            this.localColOld = localColNew!;
+        }
     }
 
     // ----------------------------------- public -----------------------------------

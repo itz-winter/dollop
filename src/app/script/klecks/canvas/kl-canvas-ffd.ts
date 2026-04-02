@@ -58,26 +58,30 @@ export function klCanvasFfd(p: {
     const layers = p.klCanvas.getLayersRaw();
     const targetLayer = layers[p.targetLayerIndex];
 
+    let transformedSelection: MultiPolygon | undefined;
     klHistory.pause(true);
-    if (p.eraseLayerIndex !== undefined) {
-        p.klCanvas.eraseLayer({
-            layerIndex: p.eraseLayerIndex,
-            useSelection: true,
-            useAlphaLock: p.eraseLayerIndex === 0 && !backgroundIsTransparent,
-        });
+    try {
+        if (p.eraseLayerIndex !== undefined) {
+            p.klCanvas.eraseLayer({
+                layerIndex: p.eraseLayerIndex,
+                useSelection: true,
+                useAlphaLock: p.eraseLayerIndex === 0 && !backgroundIsTransparent,
+            });
+        }
+        drawWarpedSelectionSample(
+            p.algorithm,
+            p.selectionSample,
+            targetLayer.context,
+            p.ffd,
+            p.ffdRenderer,
+        );
+        transformedSelection = p.selection
+            ? transformSelection({ type: 'ffd', ffd: p.ffd }, p.selection)
+            : undefined;
+        p.klCanvas.setSelection(transformedSelection);
+    } finally {
+        klHistory.pause(false);
     }
-    drawWarpedSelectionSample(
-        p.algorithm,
-        p.selectionSample,
-        targetLayer.context,
-        p.ffd,
-        p.ffdRenderer,
-    );
-    const transformedSelection = p.selection
-        ? transformSelection({ type: 'ffd', ffd: p.ffd }, p.selection)
-        : undefined;
-    p.klCanvas.setSelection(transformedSelection);
-    klHistory.pause(false);
 
     if (!klHistory.isPaused()) {
         const ffdMesh = createFfdMeshForSelectionSample(

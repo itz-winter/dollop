@@ -718,7 +718,6 @@ export const filterTransform = {
         if (!context) {
             return false;
         }
-        klHistory.pause(true);
         const input = params.input;
         const selectedLayerIndex = params.klCanvas.getLayerIndex(context.canvas)!;
 
@@ -736,9 +735,13 @@ export const filterTransform = {
         );
         if (selection && matrix) {
             selection = transformMultiPolygon(selection, matrix);
-            params.klCanvas.setSelection(selection);
+            klHistory.pause(true);
+            try {
+                params.klCanvas.setSelection(selection);
+            } finally {
+                klHistory.pause(false);
+            }
         }
-        klHistory.pause(false);
 
         {
             const layerMap = Object.fromEntries(

@@ -46,6 +46,7 @@ export function canvasToLayerTiles(
             Mozilla/5.0 (X11; CrOS x86_64 14541.0.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/138.0.0.0 Safari/537.36
             -> no idea how this was achieved. Tried importing svg with cross-origin content. Did not result in that exception
          */
+        // InvalidStateError: The object is in an invalid state.
         const fullImageData = getImageDataSafely(ctx, 0, 0, canvas.width, canvas.height);
         const tilesX = Math.ceil(canvas.width / HISTORY_TILE_SIZE);
         const tilesY = Math.ceil(canvas.height / HISTORY_TILE_SIZE);

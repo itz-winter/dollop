@@ -142,48 +142,47 @@ export class KlCanvas {
         ) {
             throw new Error('invalid canvas size');
         }
-
-        this.klHistory.pause(true);
-
         this.width = p.width;
         this.height = p.height;
         this.selection = undefined;
-
         this.layers.splice(1, Math.max(0, this.layers.length - 1));
 
-        if (p.layers) {
-            for (let i = 0; i < p.layers.length; i++) {
-                const pItem = p.layers[i];
-                if (!this.layers[i]) {
-                    this.addLayer();
+        this.klHistory.pause(true);
+        try {
+            if (p.layers) {
+                for (let i = 0; i < p.layers.length; i++) {
+                    const pItem = p.layers[i];
+                    if (!this.layers[i]) {
+                        this.addLayer();
+                    }
+                    const layer = this.layers[i];
+                    layer.id = pItem.id;
+                    layer.name = pItem.name;
+                    layer.isVisible = pItem.isVisible;
+                    layer.mixModeStr = pItem.mixModeStr ? pItem.mixModeStr : 'source-over';
+                    layer.canvas.width = this.width;
+                    layer.canvas.height = this.height;
+                    layer.context.drawImage(pItem.image, 0, 0);
+                    this.setOpacity(i, pItem.opacity);
                 }
-                const layer = this.layers[i];
-                layer.id = pItem.id;
-                layer.name = pItem.name;
-                layer.isVisible = pItem.isVisible;
-                layer.mixModeStr = pItem.mixModeStr ? pItem.mixModeStr : 'source-over';
+            } else {
+                const layer = this.layers[0];
+                layer.name = p.layerName ? p.layerName : LANG('layers-layer') + ' 1';
+                layer.isVisible = true;
                 layer.canvas.width = this.width;
                 layer.canvas.height = this.height;
-                layer.context.drawImage(pItem.image, 0, 0);
-                this.setOpacity(i, pItem.opacity);
+                layer.mixModeStr = 'source-over';
+                this.setOpacity(0, 1);
+                if (p.color) {
+                    this.layerFill(0, p.color);
+                } else if (p.image) {
+                    layer.context.drawImage(p.image, 0, 0);
+                }
             }
-        } else {
-            const layer = this.layers[0];
-            layer.name = p.layerName ? p.layerName : LANG('layers-layer') + ' 1';
-            layer.isVisible = true;
-            layer.canvas.width = this.width;
-            layer.canvas.height = this.height;
-            layer.mixModeStr = 'source-over';
-            this.setOpacity(0, 1);
-            if (p.color) {
-                this.layerFill(0, p.color);
-            } else if (p.image) {
-                layer.context.drawImage(p.image, 0, 0);
-            }
+        } finally {
+            this.klHistory.pause(false);
         }
         this.updateIndices();
-
-        this.klHistory.pause(false);
 
         if (!this.klHistory.isPaused()) {
             const historyEntryData: THistoryEntryDataComposed = {
@@ -390,8 +389,11 @@ export class KlCanvas {
         this.layers.splice(index, 0, layer);
 
         this.klHistory.pause(true);
-        this.setOpacity(index, 1);
-        this.klHistory.pause(false);
+        try {
+            this.setOpacity(index, 1);
+        } finally {
+            this.klHistory.pause(false);
+        }
         this.updateIndices();
 
         if (!this.klHistory.isPaused()) {
@@ -443,6 +445,7 @@ export class KlCanvas {
         {
             // draw into new layer from old
             const tilesPerX = Math.ceil(this.width / HISTORY_TILE_SIZE);
+            // Uncaught TypeError: Cannot read properties of undefined (reading 'tiles')
             srcComposed.tiles.forEach((tile, index) => {
                 const x = index % tilesPerX;
                 const y = Math.floor(index / tilesPerX);
@@ -656,9 +659,11 @@ export class KlCanvas {
             bottomCtx.restore();
         }
         this.klHistory.pause(true);
-        this.removeLayer(layerTopIndex);
-        this.klHistory.pause(false);
-
+        try {
+            this.removeLayer(layerTopIndex);
+        } finally {
+            this.klHistory.pause(false);
+        }
         if (!this.klHistory.isPaused()) {
             this.klHistory.push({
                 activeLayerId: bottomLayer.id,
@@ -695,13 +700,14 @@ export class KlCanvas {
         }
 
         this.klHistory.pause(true);
-
-        // remove upper layers
-        for (let i = this.layers.length - 1; i > 0; i--) {
-            this.removeLayer(i);
+        try {
+            // remove upper layers
+            for (let i = this.layers.length - 1; i > 0; i--) {
+                this.removeLayer(i);
+            }
+        } finally {
+            this.klHistory.pause(false);
         }
-
-        this.klHistory.pause(false);
 
         if (!this.klHistory.isPaused()) {
             const activeLayerId = bottomLayer.id;

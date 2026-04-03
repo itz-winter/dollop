@@ -38,7 +38,7 @@ export class KlHistory {
             for (let i = 0; i < this.listeners.length; i++) {
                 this.listeners[i]();
             }
-        }, 1);
+        });
     }
 
     private updateComposed(): void {

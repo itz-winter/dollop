@@ -78,7 +78,6 @@ import {
     updateBounds,
 } from './math/math';
 import { createCanvas } from './base/create-canvas';
-import { BbLog } from './base/bb-log';
 import { LocalStorage } from './base/local-storage';
 import { CoalescedExploder } from './input/event-chain/coalesced-exploder';
 import { NFingerTapper } from './input/event-chain/n-finger-tapper';
@@ -113,7 +112,6 @@ export const BB = {
     shareCanvas,
     handleClick,
     createSvg,
-    BbLog,
     LocalStorage,
     throwIfNull,
     nullToUndefined,

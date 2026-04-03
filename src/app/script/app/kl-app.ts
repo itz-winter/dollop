@@ -1992,11 +1992,11 @@ export class KlApp {
                     title: LANG('layers'),
                     image: tabLayersImg,
                     onOpen: () => {
+                        this.layersUi.setIsVisible(true);
                         this.layersUi.update();
-                        this.layersUi.getElement().style.display = 'block';
                     },
                     onClose: () => {
-                        this.layersUi.getElement().style.display = 'none';
+                        this.layersUi.setIsVisible(false);
                     },
                     css: {
                         minWidth: '45px',

@@ -18,9 +18,12 @@ import duplicateLayerImg from 'url:/src/app/img/ui/duplicate-layer.svg';
 import mergeLayerImg from 'url:/src/app/img/ui/merge-layers.svg';
 import removeLayerImg from 'url:/src/app/img/ui/remove-layer.svg';
 import renameLayerImg from 'url:/src/app/img/ui/rename-layer.svg';
+import clipToBelowImg from 'url:/src/app/img/ui/clip-to-below.svg';
 import caretDownImg from 'url:/src/app/img/ui/caret-down.svg';
 import { KlHistory } from '../../../history/kl-history';
 import { makeUnfocusable } from '../../../../bb/base/ui';
+import { showLayerContextMenu } from './layer-context-menu';
+import { showModal } from '../../modals/base/showModal';
 
 const paddingLeft = 25;
 
@@ -47,6 +50,7 @@ export type TLayersUiParams = {
     klHistory: KlHistory;
     onUpdateProject: () => void; // triggers update of easel
     onClearLayer: () => void;
+    onChangeBackgroundColor?: (layerIndex: number, color: { r: number; g: number; b: number }) => void;
 };
 
 export class LayersUi {
@@ -59,6 +63,7 @@ export class LayersUi {
     private klHistory: KlHistory;
     private readonly onUpdateProject: () => void;
     private readonly onClearLayer: () => void;
+    private readonly onChangeBackgroundColor?: (layerIndex: number, color: { r: number; g: number; b: number }) => void;
 
     private readonly rootEl: HTMLElement;
     private isVisible: boolean = true;
@@ -75,6 +80,7 @@ export class LayersUi {
     private readonly addBtn: HTMLButtonElement;
     private readonly duplicateBtn: HTMLButtonElement;
     private readonly mergeBtn: HTMLButtonElement;
+    private readonly clipBtn: HTMLButtonElement;
     private readonly moreDropdown: DropdownMenu<'clear-layer' | 'advanced-merge' | 'merge-all'>;
     private readonly modeSelect: Select<TMixMode>;
     private readonly largeThumbDiv: HTMLElement;
@@ -168,6 +174,44 @@ export class LayersUi {
         });
     }
 
+    private _openBackgroundColorPicker(layerIndex: number): void {
+        const currentLayer = this.klCanvas.getLayer(layerIndex);
+        const currentColor = currentLayer.backgroundColor ?? { r: 255, g: 255, b: 255 };
+        const toHex2 = (n: number) => n.toString(16).padStart(2, '0');
+        const colorStr = `#${toHex2(currentColor.r)}${toHex2(currentColor.g)}${toHex2(currentColor.b)}`;
+
+        const colorInput = BB.el({
+            tagName: 'input',
+            custom: { type: 'color', value: colorStr },
+            css: { display: 'block', width: '100%', height: '40px', cursor: 'pointer', border: 'none' },
+        }) as HTMLInputElement;
+
+        const wrapper = BB.el({ css: { padding: '10px' } });
+        wrapper.append(
+            BB.el({ content: 'Background Color:', css: { marginBottom: '8px', fontSize: '14px' } }),
+            colorInput,
+        );
+
+        showModal({
+            div: wrapper,
+            message: '',
+            buttons: ['Ok', 'Cancel'],
+            callback: (result: string) => {
+                if (result !== 'Ok') return;
+                const hex = colorInput.value;
+                const r = parseInt(hex.slice(1, 3), 16);
+                const g = parseInt(hex.slice(3, 5), 16);
+                const b = parseInt(hex.slice(5, 7), 16);
+                const newColor = { r, g, b };
+                this.klCanvas.setBackgroundColor(layerIndex, newColor);
+                if (this.onChangeBackgroundColor) {
+                    this.onChangeBackgroundColor(layerIndex, newColor);
+                }
+                this.onSelect(layerIndex, false);
+            },
+        });
+    }
+
     private updateHeight(): void {
         this.layerListEl.style.height = this.layerElArr.length * 35 + 'px';
     }
@@ -182,10 +226,12 @@ export class LayersUi {
 
         const createLayerEntry = (index: number): void => {
             const klLayer = throwIfNull(this.klCanvas.getLayerOld(index));
+            const klCanvasLayer = this.klCanvas.getLayer(index);
             const layerName = klLayer.name;
             const opacity = this.klCanvasLayerArr[index].opacity;
             const isVisible = klLayer.isVisible;
             const layercanvas = this.klCanvasLayerArr[index].context.canvas;
+            const isBackground = !!klCanvasLayer.isBackground;
 
             const layer: TLayerEl = BB.el({
                 className: 'kl-layer',
@@ -195,6 +241,13 @@ export class LayersUi {
             css(layer, {
                 top: layer.posY + 'px',
             });
+            // Visual distinction for background layers
+            if (isBackground) {
+                layer.classList.add('kl-layer--background');
+                css(layer, {
+                    background: 'linear-gradient(to right, rgba(200,180,120,0.12), transparent)',
+                });
+            }
             const innerLayer = BB.el();
             css(innerLayer, {
                 position: 'relative',
@@ -286,12 +339,21 @@ export class LayersUi {
                 });
             }
 
+            // Red left border for clipped layers
+            if (klCanvasLayer.isClipped) {
+                css(container1, { borderLeft: '5px solid #f33' });
+            }
+
             //layerlabel
             {
                 layer.label = BB.el({
                     className: 'kl-layer__label',
                 });
                 layer.layerName = layerName;
+                // Show lock icon for background layers
+                if (isBackground) {
+                    layer.label.append('🔒 ');
+                }
                 layer.label.append(layer.layerName);
 
                 css(layer.label, {
@@ -307,6 +369,12 @@ export class LayersUi {
                 });
 
                 layer.label.ondblclick = () => {
+                    if (isBackground) {
+                        // Background layer: open color picker
+                        this.applyUncommitted();
+                        this._openBackgroundColorPicker(index);
+                        return;
+                    }
                     this.applyUncommitted();
                     this.renameLayer(layer.spot);
                 };
@@ -515,6 +583,75 @@ export class LayersUi {
                 maxPointers: 1,
             });
 
+            // Right-click context menu
+            container1.oncontextmenu = (e: MouseEvent) => {
+                e.preventDefault();
+                e.stopPropagation();
+                // Select the layer first
+                if (!layer.isSelected) {
+                    this.activateLayer(layer.spot);
+                    this.applyUncommitted();
+                    this.onSelect(layer.spot, true);
+                }
+                const klLayerInfo = this.klCanvas.getLayer(layer.spot);
+                const isBackground = !!klLayerInfo.isBackground;
+                const isClipped = !!klLayerInfo.isClipped;
+                showLayerContextMenu({
+                    x: e.clientX,
+                    y: e.clientY,
+                    canDelete: this.layerElArr.length > 1 && !isBackground,
+                    canMergeDown: layer.spot > 0,
+                    canAdd: this.klCanvasLayerArr.length < MAX_LAYERS,
+                    isBackground,
+                    isClipped,
+                    canClip: layer.spot > 0 && !isBackground,
+                    onAction: (action) => {
+                        this.applyUncommitted();
+                        if (action === 'rename') {
+                            this.renameLayer(layer.spot);
+                        } else if (action === 'duplicate') {
+                            if (this.klCanvas.duplicateLayer(this.selectedSpotIndex) === false) return;
+                            this.klCanvasLayerArr = this.klCanvas.getLayers();
+                            this.selectedSpotIndex++;
+                            this.onSelect(this.selectedSpotIndex, false);
+                            this.updateButtons();
+                        } else if (action === 'delete') {
+                            if (this.layerElArr.length <= 1) return;
+                            this.klCanvas.removeLayer(this.selectedSpotIndex);
+                            if (this.selectedSpotIndex > 0) this.selectedSpotIndex--;
+                            this.klCanvasLayerArr = this.klCanvas.getLayers();
+                            this.onSelect(this.selectedSpotIndex, false);
+                            this.updateButtons();
+                        } else if (action === 'merge-down') {
+                            if (this.selectedSpotIndex <= 0) return;
+                            this.klCanvas.mergeLayers(this.selectedSpotIndex, this.selectedSpotIndex - 1);
+                            this.klCanvasLayerArr = this.klCanvas.getLayers();
+                            this.selectedSpotIndex--;
+                            this.onSelect(this.selectedSpotIndex, false);
+                            this.updateButtons();
+                        } else if (action === 'clear') {
+                            this.onClearLayer();
+                        } else if (action === 'add-above') {
+                            if (this.klCanvas.addLayer(this.selectedSpotIndex) === false) return;
+                            this.klCanvasLayerArr = this.klCanvas.getLayers();
+                            this.selectedSpotIndex = this.selectedSpotIndex + 1;
+                            this.onSelect(this.selectedSpotIndex, false);
+                            this.updateButtons();
+                        } else if (action === 'add-below') {
+                            const belowIndex = Math.max(0, this.selectedSpotIndex - 1);
+                            if (this.klCanvas.addLayer(belowIndex) === false) return;
+                            this.klCanvasLayerArr = this.klCanvas.getLayers();
+                            this.onSelect(this.selectedSpotIndex, false);
+                            this.updateButtons();
+                        } else if (action === 'toggle-clip') {
+                            const currentLayer = this.klCanvas.getLayer(layer.spot);
+                            this.klCanvas.setLayerClipped(layer.spot, !currentLayer.isClipped);
+                            this.onSelect(layer.spot, false);
+                        }
+                    },
+                });
+            };
+
             this.layerListEl.append(layer);
         };
         this.layerElArr = [];
@@ -534,11 +671,14 @@ export class LayersUi {
     private updateButtons(): void {
         const maxReached = this.klCanvasLayerArr.length === MAX_LAYERS;
         const oneLayer = this.klCanvasLayerArr.length === 1;
+        const selectedLayer = this.klCanvas.getLayer(this.selectedSpotIndex);
+        const isBackground = !!(selectedLayer && (selectedLayer as any).isBackground);
 
         this.addBtn.disabled = maxReached;
-        this.removeBtn.disabled = oneLayer;
+        this.removeBtn.disabled = oneLayer || isBackground;
         this.duplicateBtn.disabled = maxReached;
         this.mergeBtn.disabled = this.selectedSpotIndex === 0;
+        this.clipBtn.disabled = this.selectedSpotIndex === 0 || isBackground;
         this.moreDropdown.setEnabled('advanced-merge', !oneLayer);
         this.moreDropdown.setEnabled('merge-all', !oneLayer);
     }
@@ -553,6 +693,7 @@ export class LayersUi {
         this.klHistory = p.klHistory;
         this.onUpdateProject = p.onUpdateProject;
         this.onClearLayer = p.onClearLayer;
+        this.onChangeBackgroundColor = p.onChangeBackgroundColor;
 
         this.layerElArr = [];
         this.layerHeight = 35;
@@ -610,6 +751,7 @@ export class LayersUi {
         this.duplicateBtn = BB.el({ tagName: 'button' });
         this.mergeBtn = BB.el({ tagName: 'button' });
         this.removeBtn = BB.el({ tagName: 'button' });
+        this.clipBtn = BB.el({ tagName: 'button' });
         const renameBtn = BB.el({ tagName: 'button' });
         this.moreDropdown = new DropdownMenu({
             button: BB.el({
@@ -660,6 +802,7 @@ export class LayersUi {
                 makeUnfocusable(this.mergeBtn);
                 makeUnfocusable(this.removeBtn);
                 makeUnfocusable(renameBtn);
+                makeUnfocusable(this.clipBtn);
 
                 const commonStyle = {
                     cssFloat: 'left',
@@ -675,18 +818,21 @@ export class LayersUi {
                     height: '30px',
                     lineHeight: '20px',
                 });
+                css(this.clipBtn, commonStyle);
 
                 this.addBtn.title = LANG('layers-new');
                 this.duplicateBtn.title = LANG('layers-duplicate');
                 this.removeBtn.title = LANG('layers-remove');
                 this.mergeBtn.title = LANG('layers-merge');
                 renameBtn.title = LANG('layers-rename-title');
+                this.clipBtn.title = 'Clip to Layer Below';
 
                 this.addBtn.innerHTML = "<img src='" + addLayerImg + "' height='20'/>";
                 this.duplicateBtn.innerHTML = "<img src='" + duplicateLayerImg + "' height='20'/>";
                 this.mergeBtn.innerHTML = "<img src='" + mergeLayerImg + "' height='20'/>";
                 this.removeBtn.innerHTML = "<img src='" + removeLayerImg + "' height='20'/>";
                 renameBtn.innerHTML = "<img src='" + renameLayerImg + "' height='20'/>";
+                this.clipBtn.innerHTML = "<img src='" + clipToBelowImg + "' height='20'/>";
                 div.append(
                     c(',flex,gap-5,mb-10', [
                         this.addBtn,
@@ -694,6 +840,7 @@ export class LayersUi {
                         this.duplicateBtn,
                         this.mergeBtn,
                         renameBtn,
+                        this.clipBtn,
                         c(',grow-1'),
                         this.moreDropdown.getElement(),
                     ]),
@@ -754,6 +901,13 @@ export class LayersUi {
                 renameBtn.onclick = () => {
                     this.applyUncommitted();
                     this.renameLayer(this.selectedSpotIndex);
+                };
+
+                this.clipBtn.onclick = () => {
+                    this.applyUncommitted();
+                    const currentLayer = this.klCanvas.getLayer(this.selectedSpotIndex);
+                    this.klCanvas.setLayerClipped(this.selectedSpotIndex, !currentLayer.isClipped);
+                    this.onSelect(this.selectedSpotIndex, false);
                 };
             };
             setTimeout(async, 1);
@@ -913,5 +1067,13 @@ export class LayersUi {
         }
         this.isVisible = b;
         this.rootEl.style.display = b ? 'block' : 'none';
+    }
+
+    getMaskEditLayerIndex(): number | null {
+        return null;
+    }
+
+    exitMaskEditMode(): void {
+        // no-op: mask edit mode removed
     }
 }

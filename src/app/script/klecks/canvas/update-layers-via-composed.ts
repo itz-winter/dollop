@@ -5,6 +5,29 @@ import { BB } from '../../bb/bb';
 import { sortLayerMap } from '../history/sort-layer-map';
 import { isLayerFill } from '../kl-types';
 
+function applyTilesToCanvas(
+    canvas: HTMLCanvasElement,
+    context: CanvasRenderingContext2D,
+    tiles: (import('../history/history.types').THistoryEntryLayerTile | undefined)[],
+    tilesPerX: number,
+    prevTiles?: (import('../history/history.types').THistoryEntryLayerTile | undefined)[],
+): void {
+    tiles.forEach((item, index) => {
+        if (prevTiles && item === prevTiles[index]) return;
+        const x = index % tilesPerX;
+        const y = Math.floor(index / tilesPerX);
+        if (isLayerFill(item)) {
+            context.save();
+            context.fillStyle = item.fill;
+            context.clearRect(x * HISTORY_TILE_SIZE, y * HISTORY_TILE_SIZE, HISTORY_TILE_SIZE, HISTORY_TILE_SIZE);
+            context.fillRect(x * HISTORY_TILE_SIZE, y * HISTORY_TILE_SIZE, HISTORY_TILE_SIZE, HISTORY_TILE_SIZE);
+            context.restore();
+        } else if (item) {
+            context.putImageData(item.data, x * HISTORY_TILE_SIZE, y * HISTORY_TILE_SIZE);
+        }
+    });
+}
+
 /**
  * Applies history delta to the project, optimized for performance.
  * note: modifies the canvases in project
@@ -95,6 +118,7 @@ export function updateLayersViaComposed(
                 opacity: composedAfterLayer.opacity,
                 canvas,
                 context,
+                isClipped: composedAfterLayer.isClipped || undefined,
             };
         })
         .sort(sortLayerMap);

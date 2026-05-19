@@ -53,6 +53,16 @@ function composeLayerTiles(
 function composeLayer(
     layerEntries: (THistoryEntryLayer | undefined)[],
 ): THistoryEntryLayerComposed {
+    // Safe fallback for isClipped (may not be in older history entries)
+    let isClipped = false;
+    for (let i = layerEntries.length - 1; i >= 0; i--) {
+        const entry = layerEntries[i];
+        if (entry && entry.isClipped !== undefined) {
+            isClipped = entry.isClipped;
+            break;
+        }
+    }
+
     return {
         name: getLatestDefinedProp(layerEntries, 'name'),
         opacity: getLatestDefinedProp(layerEntries, 'opacity'),
@@ -60,6 +70,7 @@ function composeLayer(
         mixModeStr: getLatestDefinedProp(layerEntries, 'mixModeStr'),
         index: getLatestDefinedProp(layerEntries, 'index'),
         tiles: composeLayerTiles(layerEntries.map((item) => (item ? item.tiles : undefined))),
+        isClipped,
     };
 }
 

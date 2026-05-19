@@ -56,6 +56,9 @@ export type TKlCanvasLayer = {
     compositeObj?: TLayerComposite;
     canvas: HTMLCanvasElement;
     context: CanvasRenderingContext2D;
+    isBackground?: boolean; // if true: protected background layer (no draw/delete/rename)
+    backgroundColor?: TRgb; // fill color when isBackground is true
+    isClipped?: boolean; // if true: clips to the alpha of the layer below (Photoshop clipping mask)
 };
 
 export type TLayerComposite = {
@@ -649,11 +652,31 @@ export class KlCanvas {
                 bottomCtx.globalAlpha = topOpacity;
                 bottomCtx.drawImage(topLayer.canvas, 0, 0);
             } else {
+                // If the top layer is clipped, its content must be masked to the bottom layer's
+                // current alpha before merging so the visual result matches what was on screen.
+                let sourceCanvas: HTMLCanvasElement = topLayer.canvas;
+                let ownedTemp = false;
+                if (topLayer.isClipped) {
+                    const w = this.width;
+                    const h = this.height;
+                    const tempCanvas = BB.canvas(w, h);
+                    const tempCtx = BB.ctx(tempCanvas);
+                    tempCtx.drawImage(topLayer.canvas, 0, 0);
+                    tempCtx.globalCompositeOperation = 'destination-in';
+                    tempCtx.drawImage(bottomLayer.canvas, 0, 0);
+                    sourceCanvas = tempCanvas;
+                    ownedTemp = true;
+                }
+
                 if (mixModeStr) {
                     bottomCtx.globalCompositeOperation = mixModeStr;
                 }
                 bottomCtx.globalAlpha = topOpacity;
-                bottomCtx.drawImage(topLayer.canvas, 0, 0);
+                bottomCtx.drawImage(sourceCanvas, 0, 0);
+
+                if (ownedTemp) {
+                    BB.freeCanvas(sourceCanvas);
+                }
             }
 
             bottomCtx.restore();
@@ -1229,6 +1252,7 @@ export class KlCanvas {
         name: string;
         mixModeStr: TMixMode;
         compositeObj?: TLayerComposite;
+        isClipped?: boolean;
     }[] {
         return this.layers.map((item) => {
             return {
@@ -1238,6 +1262,7 @@ export class KlCanvas {
                 name: item.name,
                 mixModeStr: item.mixModeStr,
                 ...(item.compositeObj ? { compositeObj: item.compositeObj } : {}),
+                ...(item.isClipped ? { isClipped: item.isClipped } : {}),
             };
         });
     }
@@ -1302,6 +1327,7 @@ export class KlCanvas {
                     opacity: layer.opacity,
                     mixModeStr: layer.mixModeStr,
                     image: layer.canvas,
+                    isClipped: layer.isClipped,
                 };
             }),
         };
@@ -1316,6 +1342,77 @@ export class KlCanvas {
                 layerMap: createLayerMap(this.layers, {
                     layerId: targetLayer.id,
                     attributes: ['mixModeStr'],
+                }),
+            });
+        }
+    }
+
+    /**
+     * Mark a layer as a background layer (protected: can't be drawn on, deleted, or renamed).
+     * background=true also fills the canvas with the given color.
+     */
+    setLayerBackground(layerIndex: number, isBackground: boolean, color?: TRgb): void {
+        const targetLayer = this.layers[layerIndex];
+        if (!targetLayer) return;
+        targetLayer.isBackground = isBackground;
+        if (isBackground && color) {
+            targetLayer.backgroundColor = color;
+            const ctx = targetLayer.context;
+            ctx.save();
+            ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+            ctx.fillStyle = `rgb(${color.r},${color.g},${color.b})`;
+            ctx.fillRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+            ctx.restore();
+            if (!this.klHistory.isPaused()) {
+                this.klHistory.push({
+                    layerMap: createLayerMap(this.layers, {
+                        layerId: targetLayer.id,
+                        attributes: ['tiles'],
+                    }),
+                });
+            }
+        } else if (!isBackground) {
+            targetLayer.backgroundColor = undefined;
+        }
+    }
+
+    /**
+     * Change the fill color of a background layer.
+     */
+    setBackgroundColor(layerIndex: number, color: TRgb): void {
+        const targetLayer = this.layers[layerIndex];
+        if (!targetLayer || !targetLayer.isBackground) return;
+        targetLayer.backgroundColor = color;
+        const ctx = targetLayer.context;
+        ctx.save();
+        ctx.clearRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+        ctx.fillStyle = `rgb(${color.r},${color.g},${color.b})`;
+        ctx.fillRect(0, 0, targetLayer.canvas.width, targetLayer.canvas.height);
+        ctx.restore();
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                layerMap: createLayerMap(this.layers, {
+                    layerId: targetLayer.id,
+                    attributes: ['tiles'],
+                }),
+            });
+        }
+    }
+
+    /**
+     * Toggle whether a layer clips to the alpha of the layer below it.
+     * When clipped, the layer's visible area is limited to where the base layer is non-transparent.
+     */
+    setLayerClipped(layerIndex: number, isClipped: boolean): void {
+        const targetLayer = this.layers[layerIndex];
+        if (!targetLayer) return;
+        targetLayer.isClipped = isClipped || undefined; // store undefined for false to keep it clean
+
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                layerMap: createLayerMap(this.layers, {
+                    layerId: targetLayer.id,
+                    attributes: ['isClipped'],
                 }),
             });
         }

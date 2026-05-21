@@ -46,6 +46,21 @@ function createEntryLayer(
     if (useAll || attributes.includes('isClipped')) {
         result.isClipped = !!layer.isClipped;
     }
+    if (useAll || attributes.includes('isBackground')) {
+        result.isBackground = !!layer.isBackground;
+        if (layer.backgroundColor) {
+            result.backgroundColor = layer.backgroundColor;
+        }
+    }
+    if (useAll || attributes.includes('isFolder')) {
+        result.isFolder = !!layer.isFolder;
+    }
+    if (useAll || attributes.includes('isFolderOpen')) {
+        result.isFolderOpen = layer.isFolderOpen !== false; // default true
+    }
+    if (useAll || attributes.includes('folderId')) {
+        result.folderId = layer.folderId ?? null; // null = not in any folder
+    }
     return result;
 }
 

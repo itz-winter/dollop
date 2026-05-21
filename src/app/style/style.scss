@@ -618,6 +618,12 @@ button img,
     }
 }
 
+.kl-layer--multi-selected {
+    background: #e8f0ff;
+    border: 1px solid var(--active-highlight-color);
+    opacity: 0.85;
+}
+
 .info-hint {
     background: rgb(255, 132, 115);
     padding: 10px;

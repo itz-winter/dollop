@@ -9,7 +9,9 @@ export type TLayerContextMenuAction =
     | 'clear'
     | 'add-above'
     | 'add-below'
-    | 'toggle-clip';
+    | 'toggle-clip'
+    | 'move-to-new-group'
+    | 'remove-from-group';
 
 export type TLayerContextMenuParams = {
     x: number;
@@ -20,6 +22,9 @@ export type TLayerContextMenuParams = {
     isBackground: boolean;
     isClipped: boolean;
     canClip: boolean; // false when this is the bottom layer
+    isFolder: boolean;       // true = this layer is a folder header
+    isInFolder: boolean;     // true = this layer belongs to a folder
+    canAddToFolder: boolean; // true = a folder exists to move into
     onAction: (action: TLayerContextMenuAction) => void;
 };
 
@@ -82,6 +87,19 @@ export function showLayerContextMenu(p: TLayerContextMenuParams): void {
             action: 'toggle-clip',
             disabled: !p.canClip,
         });
+        // Folder membership
+        if (!p.isFolder) {
+            items.push({ isDivider: true });
+            if (p.isInFolder) {
+                items.push({ label: 'Remove from Group', action: 'remove-from-group' });
+            } else {
+                items.push({
+                    label: 'Move to New Group',
+                    action: 'move-to-new-group',
+                    disabled: !p.canAdd,
+                });
+            }
+        }
         items.push({ isDivider: true });
         items.push({ label: LANG('layers-remove'), action: 'delete', disabled: !p.canDelete });
     }

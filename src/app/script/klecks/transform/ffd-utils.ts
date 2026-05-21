@@ -31,7 +31,7 @@ function getFfdMeshBounds(mesh: TFfdMesh): TCoordinateBounds {
 
 // returns bounds of mesh that ffd lattice would create
 export function getFfdBounds(ffd: TFfdLattice): TCoordinateBounds {
-    // Use a dummy canvas size of 1x1 since we request canvas space — the actual
+    // Use a dummy canvas size of 1x1 since we request canvas space - the actual
     // canvas dimensions don't matter here because useCanvasSpace bypasses the
     // NDC conversion entirely.
     const mesh = createFfdMesh(

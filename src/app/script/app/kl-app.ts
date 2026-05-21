@@ -297,16 +297,23 @@ export class KlApp {
                     height: initialHeight,
                     layers: [
                         {
-                            name: LANG('layers-layer') + ' 1', // not ideal
+                            name: 'Paper',
+                            opacity: 1,
+                            isVisible: true,
+                            mixModeStr: 'source-over',
+                            isBackground: true,
+                            backgroundColor: { r: 255, g: 255, b: 255 },
+                            image: {
+                                fill: 'rgb(255,255,255)',
+                            },
+                        },
+                        {
+                            name: LANG('layers-layer') + ' 1',
                             opacity: 1,
                             isVisible: true,
                             mixModeStr: 'source-over',
                             image: {
-                                fill: BB.ColorConverter.toRgbStr({
-                                    r: ERASE_COLOR,
-                                    g: ERASE_COLOR,
-                                    b: ERASE_COLOR,
-                                }),
+                                fill: 'transparent',
                             },
                         },
                     ],
@@ -331,6 +338,9 @@ export class KlApp {
         }
 
         this.klCanvas = new KL.KlCanvas(this.klHistory, this.embed ? -1 : 1);
+        if (!p.project) {
+            this.klCanvas.setLayerBackground(0, true, { r: 255, g: 255, b: 255 });
+        }
         const tempHistory = new KlTempHistory();
         let mainTabRow: TabRow | undefined = undefined;
 
@@ -623,6 +633,7 @@ export class KlApp {
         const easelHand = new EaselHand({});
         const easelShape = new EaselShape({
             onDown: (p, angleRad) => {
+                if (currentLayer.isBackground) return;
                 shapeTool.onDown(p.x, p.y, angleRad);
             },
             onMove: (p) => {
@@ -668,6 +679,7 @@ export class KlApp {
                 }),
                 paintBucket: new EaselPaintBucket({
                     onFill: (p) => {
+                        if (currentLayer.isBackground) return;
                         this.klCanvas.floodFill(
                             currentLayer.index,
                             p.x,
@@ -684,6 +696,7 @@ export class KlApp {
                 }),
                 gradient: new EaselGradient({
                     onDown: (p, angleRad) => {
+                        if (currentLayer.isBackground) return;
                         gradientTool.onDown(p.x, p.y, angleRad);
                     },
                     onMove: (p) => {
@@ -695,6 +708,7 @@ export class KlApp {
                 }),
                 text: new EaselText({
                     onDown: (p, angleRad) => {
+                        if (currentLayer.isBackground) return;
                         if (KL.DIALOG_COUNTER.get() > 0) {
                             return;
                         }
@@ -1621,14 +1635,14 @@ export class KlApp {
                         : this.uiWidth - this.toolWidth,
                 workspaceHeight: this.uiHeight,
                 onConfirm: (width, height, color) => {
-                    this.klCanvas.reset({
+                    const newLayerIndex = this.klCanvas.reset({
                         width: width,
                         height: height,
                         color: color.a === 1 ? color : undefined,
                     });
 
-                    this.layersUi.update(0);
-                    setCurrentLayer(this.klCanvas.getLayer(0));
+                    this.layersUi.update(newLayerIndex);
+                    setCurrentLayer(this.klCanvas.getLayer(newLayerIndex));
                     this.easelProjectUpdater.update();
                     this.easel.resetOrFitTransform(true);
                 },

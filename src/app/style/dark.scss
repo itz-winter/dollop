@@ -491,6 +491,12 @@
         }
     }
 
+    .kl-layer--multi-selected {
+        background: #3a4060;
+        border: 1px solid var(--active-highlight-color);
+        opacity: 0.85;
+    }
+
     .kl-point-slider__line {
         background: #777;
     }

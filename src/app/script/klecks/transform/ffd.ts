@@ -123,7 +123,7 @@ export function createFfdMeshForSelectionSample(
 ): TFfdMesh {
     /**
      * Compute the parametric s/t ranges so that mesh only covers the texture's
-     * portion of the lattice — UVs stay in [0, 1] and nothing outside the texture is drawn.
+     * portion of the lattice - UVs stay in [0, 1] and nothing outside the texture is drawn.
      */
     const textureWidth = selectionSample.image.width;
     const textureHeight = selectionSample.image.height;

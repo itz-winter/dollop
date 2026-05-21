@@ -56,22 +56,124 @@ export class EaselProjectUpdater<T extends string> {
         const easelLayers: TEaselLayer[] = [];
         const usedGroupKeys = new Set<number>();
 
+        // Build folder child index set so we can skip them in the main loop
+        const folderChildrenMap = new Map<string, (typeof layers[number])[]>();
+        const folderCanvasKeyMap = new Map<string, number>(); // folderId → base index (for groupCanvases key)
+        const childLayerIds = new Set<string>();
+        for (let k = 0; k < layers.length; k++) {
+            const l = layers[k];
+            if (l.isFolder) {
+                folderChildrenMap.set(l.id, []);
+                folderCanvasKeyMap.set(l.id, k);
+            }
+        }
+        for (const l of layers) {
+            if (l.folderId && folderChildrenMap.has(l.folderId)) {
+                folderChildrenMap.get(l.folderId)!.push(l);
+                childLayerIds.add(l.id);
+            }
+        }
+
         let i = 0;
         while (i < layers.length) {
             const baseLayer = layers[i];
             const baseIndex = i;
 
-            // Collect consecutive clipped layers above this base
+            // Skip layers that are folder children - rendered inside the folder group
+            if (childLayerIds.has(baseLayer.id)) {
+                i++;
+                continue;
+            }
+
+            // Collect consecutive clipped layers above this base (non-folder-children only)
             const clippedGroup: (typeof layers[number])[] = [];
             let j = i + 1;
-            while (j < layers.length && layers[j].isClipped) {
+            while (j < layers.length && layers[j].isClipped && !childLayerIds.has(layers[j].id)) {
                 clippedGroup.push(layers[j]);
                 j++;
             }
             i = j;
 
             if (clippedGroup.length === 0) {
-                // Simple layer — use compositeObj path if present, or raw canvas
+                // ── Folder group ──
+                if (baseLayer.isFolder) {
+                    const folderChildren = folderChildrenMap.get(baseLayer.id) ?? [];
+                    const folderKey = folderCanvasKeyMap.get(baseLayer.id) ?? baseIndex;
+                    usedGroupKeys.add(folderKey);
+                    if (!this.groupCanvases.has(folderKey)) {
+                        this.groupCanvases.set(folderKey, BB.canvas(width, height));
+                    }
+                    const folderGroupCanvas = this.groupCanvases.get(folderKey)!;
+                    const capturedChildren = [...folderChildren];
+                    const capturedBase = baseLayer;
+
+                    easelLayers.push({
+                        image: (): HTMLCanvasElement => {
+                            if (folderGroupCanvas.width !== width || folderGroupCanvas.height !== height) {
+                                folderGroupCanvas.width = width;
+                                folderGroupCanvas.height = height;
+                            }
+                            const fCtx = folderGroupCanvas.getContext('2d')!;
+                            fCtx.clearRect(0, 0, width, height);
+
+                            let ci = 0;
+                            while (ci < capturedChildren.length) {
+                                const childBase = capturedChildren[ci];
+                                const childClipped: (typeof layers[number])[] = [];
+                                let cj = ci + 1;
+                                while (cj < capturedChildren.length && capturedChildren[cj].isClipped) {
+                                    childClipped.push(capturedChildren[cj]);
+                                    cj++;
+                                }
+                                ci = cj;
+                                if (!childBase.isVisible || childBase.opacity === 0) continue;
+
+                                if (childClipped.length === 0) {
+                                    fCtx.globalAlpha = childBase.opacity;
+                                    fCtx.globalCompositeOperation = childBase.mixModeStr as GlobalCompositeOperation;
+                                    fCtx.drawImage(childBase.canvas, 0, 0);
+                                    fCtx.globalAlpha = 1;
+                                    fCtx.globalCompositeOperation = 'source-over';
+                                } else {
+                                    const cbCanvas = BB.canvas(width, height);
+                                    cbCanvas.getContext('2d')!.drawImage(childBase.canvas, 0, 0);
+                                    const cgCanvas = BB.canvas(width, height);
+                                    const cgCtx = cgCanvas.getContext('2d')!;
+                                    cgCtx.drawImage(cbCanvas, 0, 0);
+                                    for (const cl of childClipped) {
+                                        if (!cl.isVisible || cl.opacity === 0) continue;
+                                        const clCanvas = BB.canvas(width, height);
+                                        const clCtx = clCanvas.getContext('2d')!;
+                                        clCtx.drawImage(cl.canvas, 0, 0);
+                                        clCtx.globalCompositeOperation = 'destination-in';
+                                        clCtx.drawImage(cbCanvas, 0, 0);
+                                        cgCtx.globalAlpha = cl.opacity;
+                                        cgCtx.globalCompositeOperation = cl.mixModeStr as GlobalCompositeOperation;
+                                        cgCtx.drawImage(clCanvas, 0, 0);
+                                        cgCtx.globalAlpha = 1;
+                                        cgCtx.globalCompositeOperation = 'source-over';
+                                        BB.freeCanvas(clCanvas);
+                                    }
+                                    fCtx.globalAlpha = childBase.opacity;
+                                    fCtx.globalCompositeOperation = childBase.mixModeStr as GlobalCompositeOperation;
+                                    fCtx.drawImage(cgCanvas, 0, 0);
+                                    fCtx.globalAlpha = 1;
+                                    fCtx.globalCompositeOperation = 'source-over';
+                                    BB.freeCanvas(cbCanvas);
+                                    BB.freeCanvas(cgCanvas);
+                                }
+                            }
+                            return folderGroupCanvas;
+                        },
+                        isVisible: capturedBase.isVisible,
+                        opacity: capturedBase.opacity,
+                        mixModeStr: capturedBase.mixModeStr,
+                        hasClipping: false,
+                    });
+                    continue;
+                }
+
+                // ── Simple layer ──
                 let image: HTMLCanvasElement | (() => HTMLCanvasElement);
                 if (baseLayer.compositeObj && compositeCanvas) {
                     const capturedLayer = baseLayer;
@@ -99,7 +201,7 @@ export class EaselProjectUpdater<T extends string> {
                     hasClipping: false,
                 });
             } else {
-                // Clipping group — composite all layers into a group canvas
+                // Clipping group - composite all layers into a group canvas
                 usedGroupKeys.add(baseIndex);
                 if (!this.groupCanvases.has(baseIndex)) {
                     this.groupCanvases.set(baseIndex, BB.canvas(width, height));

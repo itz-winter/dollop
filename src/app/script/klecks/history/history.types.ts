@@ -1,5 +1,5 @@
 import { MultiPolygon } from 'polygon-clipping';
-import { TLayerFill, TMixMode } from '../kl-types';
+import { TLayerFill, TMixMode, TRgb } from '../kl-types';
 
 export type TLayerId = string;
 export type TImageDataTile = {
@@ -36,6 +36,15 @@ export type THistoryEntryLayer = {
 
     // if clipping changed (layer clips to layer below)
     isClipped?: boolean;
+
+    // if background state changed
+    isBackground?: boolean;
+    backgroundColor?: TRgb;
+
+    // if folder state changed
+    isFolder?: boolean;       // true = this layer is a folder/group header
+    isFolderOpen?: boolean;   // true = folder is expanded in UI
+    folderId?: string | null; // ID of the folder this layer belongs to (null = remove from folder)
 };
 export type THistoryEntryData = {
     // if project changed
@@ -69,9 +78,13 @@ export type THistoryEntry = {
     data: THistoryEntryData;
 };
 
-export type THistoryEntryLayerComposed = Omit<Required<THistoryEntryLayer>, 'tiles'> & {
+export type THistoryEntryLayerComposed = Omit<Required<THistoryEntryLayer>, 'tiles' | 'folderId' | 'backgroundColor'> & {
     tiles: THistoryEntryLayerTile[];
     isClipped: boolean;
+    isFolder: boolean;
+    isFolderOpen: boolean;
+    folderId?: string; // present only when layer belongs to a folder
+    backgroundColor?: TRgb; // optional, only for background layers
 };
 
 export type THistoryEntryDataComposed = Omit<Required<THistoryEntryData>, 'layerMap'> & {

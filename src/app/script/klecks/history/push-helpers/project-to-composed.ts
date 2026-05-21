@@ -41,6 +41,11 @@ export function projectToComposed(project: TKlProject): THistoryEntryDataCompose
                     index,
                     tiles,
                     isClipped: layer.isClipped ?? false,
+                    isBackground: layer.isBackground ?? false,
+                    ...(layer.backgroundColor ? { backgroundColor: layer.backgroundColor } : {}),
+                    isFolder: layer.isFolder ?? false,
+                    isFolderOpen: layer.isFolderOpen !== false,
+                    ...(layer.folderId ? { folderId: layer.folderId } : {}),
                 },
             ];
         }),

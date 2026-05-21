@@ -92,12 +92,18 @@ export type TKlBasicLayer = {
 };
 
 export type TKlProjectLayer = {
+    id?: string;            // optional stable UUID; present for folder-aware layers
     name: string;
     isVisible: boolean;
     opacity: number; // 0 - 1
     mixModeStr?: TMixMode; // default "source-over"
     image: HTMLImageElement | HTMLCanvasElement | TLayerFill | THistoryEntryLayerTile[]; // image already loaded
     isClipped?: boolean; // if true: clips to alpha of the layer below
+    isBackground?: boolean; // if true: protected background layer
+    backgroundColor?: TRgb;  // fill color when isBackground is true
+    isFolder?: boolean;     // true = this layer is a folder/group header (empty canvas)
+    isFolderOpen?: boolean; // true = folder is expanded (default true)
+    folderId?: string;      // ID of the folder this layer belongs to
 };
 
 // A UUID, to make the project identifiable. (Not the recovery indexedDb key)

@@ -125,7 +125,7 @@ export class KlHistory {
         if (HISTORY_DEBUGGING) {
             const totalBytes = getTotalMemoryBytes(this.entries);
             console.log(
-                `[KlHistory] pushed ${(entry.memoryEstimateBytes / 1e6).toFixed(1)} MB — total: ${(totalBytes / 1e6).toFixed(1)} MB (${this.entries.length} entries)`,
+                `[KlHistory] pushed ${(entry.memoryEstimateBytes / 1e6).toFixed(1)} MB - total: ${(totalBytes / 1e6).toFixed(1)} MB (${this.entries.length} entries)`,
             );
         }
         this.totalActions++;

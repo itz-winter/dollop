@@ -119,6 +119,11 @@ export function updateLayersViaComposed(
                 canvas,
                 context,
                 isClipped: composedAfterLayer.isClipped || undefined,
+                isBackground: composedAfterLayer.isBackground || undefined,
+                backgroundColor: composedAfterLayer.backgroundColor,
+                isFolder: composedAfterLayer.isFolder || undefined,
+                isFolderOpen: composedAfterLayer.isFolderOpen,
+                folderId: composedAfterLayer.folderId,
             };
         })
         .sort(sortLayerMap);

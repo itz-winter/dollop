@@ -59,6 +59,9 @@ export type TKlCanvasLayer = {
     isBackground?: boolean; // if true: protected background layer (no draw/delete/rename)
     backgroundColor?: TRgb; // fill color when isBackground is true
     isClipped?: boolean; // if true: clips to the alpha of the layer below (Photoshop clipping mask)
+    isFolder?: boolean;     // if true: this layer is a folder/group header (has an empty canvas)
+    isFolderOpen?: boolean; // if true: folder is expanded in the layers UI (default = true)
+    folderId?: string;      // ID of the folder layer this layer belongs to
 };
 
 export type TLayerComposite = {
@@ -169,17 +172,35 @@ export class KlCanvas {
                     this.setOpacity(i, pItem.opacity);
                 }
             } else {
-                const layer = this.layers[0];
-                layer.name = p.layerName ? p.layerName : LANG('layers-layer') + ' 1';
-                layer.isVisible = true;
-                layer.canvas.width = this.width;
-                layer.canvas.height = this.height;
-                layer.mixModeStr = 'source-over';
+                // Default: create a white "Paper" background layer + "Layer 1" on top.
+                // Resize existing layer[0] to serve as Paper.
+                const paperLayer = this.layers[0];
+                paperLayer.name = 'Paper';
+                paperLayer.isVisible = true;
+                paperLayer.canvas.width = this.width;
+                paperLayer.canvas.height = this.height;
+                paperLayer.mixModeStr = 'source-over';
+                paperLayer.isBackground = true;
+                paperLayer.backgroundColor = { r: 255, g: 255, b: 255 };
                 this.setOpacity(0, 1);
-                if (p.color) {
-                    this.layerFill(0, p.color);
-                } else if (p.image) {
-                    layer.context.drawImage(p.image, 0, 0);
+                // Fill with white
+                const paperCtx = paperLayer.context;
+                paperCtx.fillStyle = '#ffffff';
+                paperCtx.fillRect(0, 0, this.width, this.height);
+
+                // Add Layer 1 on top
+                this.addLayer(); // adds at index 1
+                const layer1 = this.layers[1];
+                layer1.name = p.layerName ? p.layerName : LANG('layers-layer') + ' 1';
+                layer1.isVisible = true;
+                layer1.canvas.width = this.width;
+                layer1.canvas.height = this.height;
+                layer1.mixModeStr = 'source-over';
+                this.setOpacity(1, 1);
+                if (p.color && p.color.r === 255 && p.color.g === 255 && p.color.b === 255) {
+                    // white fill was requested → already on Paper; Layer 1 stays transparent
+                } else if (p.color) {
+                    this.layerFill(1, p.color);
                 }
             }
         } finally {
@@ -613,6 +634,52 @@ export class KlCanvas {
         return targetIndex;
     }
 
+    /**
+     * Move a folder layer and all its children together as a block.
+     * delta is in terms of non-group layers passed (positive = up in stack).
+     * Returns the new index of the folder layer, or undefined if nothing moved.
+     */
+    moveLayerGroup(folderIndex: number, delta: number): number | void {
+        if (delta === 0) return;
+        const folderLayer = this.layers[folderIndex];
+        if (!folderLayer || !folderLayer.isFolder) return;
+
+        const folderId = folderLayer.id;
+        const groupIndices = this.layers
+            .map((_, i) => i)
+            .filter((i) => i === folderIndex || this.layers[i].folderId === folderId)
+            .sort((a, b) => a - b);
+
+        const groupLayers = groupIndices.map((i) => this.layers[i]);
+        const remainingLayers = this.layers.filter((_, i) => !groupIndices.includes(i));
+
+        // How many remaining layers are below the bottom of the group?
+        const bottomGroupIndex = groupIndices[0];
+        const insertPos = remainingLayers.filter(
+            (l) => this.layers.indexOf(l) < bottomGroupIndex,
+        ).length;
+
+        const newInsertPos = Math.max(0, Math.min(remainingLayers.length, insertPos + delta));
+        if (newInsertPos === insertPos) return; // no actual movement
+
+        this.layers = [
+            ...remainingLayers.slice(0, newInsertPos),
+            ...groupLayers,
+            ...remainingLayers.slice(newInsertPos),
+        ];
+        this.updateIndices();
+
+        const newFolderIndex = this.layers.indexOf(folderLayer);
+
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                activeLayerId: folderLayer.id,
+                layerMap: createLayerMap(this.layers, { attributes: ['index'] }),
+            });
+        }
+        return newFolderIndex;
+    }
+
     mergeLayers(
         layerBottomIndex: number,
         layerTopIndex: number,
@@ -652,11 +719,15 @@ export class KlCanvas {
                 bottomCtx.globalAlpha = topOpacity;
                 bottomCtx.drawImage(topLayer.canvas, 0, 0);
             } else {
-                // If the top layer is clipped, its content must be masked to the bottom layer's
-                // current alpha before merging so the visual result matches what was on screen.
+                // If the top layer is clipped and the bottom layer is NOT clipped, top's content
+                // must be masked to the bottom layer's alpha before merging, so the visual result
+                // matches what was on screen.
+                // If BOTH are clipped, they both clip to the same base further below - the merged
+                // result will keep isClipped=true from the bottom layer and clip naturally, so no
+                // pre-masking is needed or correct.
                 let sourceCanvas: HTMLCanvasElement = topLayer.canvas;
                 let ownedTemp = false;
-                if (topLayer.isClipped) {
+                if (topLayer.isClipped && !bottomLayer.isClipped) {
                     const w = this.width;
                     const h = this.height;
                     const tempCanvas = BB.canvas(w, h);
@@ -1231,6 +1302,7 @@ export class KlCanvas {
         opacity: number;
         name: string;
         mixModeStr: TMixMode;
+        isBackground?: boolean;
     }[] {
         return this.layers.map((layer) => {
             return {
@@ -1241,11 +1313,13 @@ export class KlCanvas {
                 opacity: layer.opacity,
                 name: layer.name,
                 mixModeStr: layer.mixModeStr,
+                ...(layer.isBackground ? { isBackground: true } : {}),
             };
         });
     }
 
     getLayersFast(): {
+        id: string;
         canvas: HTMLCanvasElement;
         isVisible: boolean;
         opacity: number;
@@ -1253,9 +1327,13 @@ export class KlCanvas {
         mixModeStr: TMixMode;
         compositeObj?: TLayerComposite;
         isClipped?: boolean;
+        isFolder?: boolean;
+        isFolderOpen?: boolean;
+        folderId?: string;
     }[] {
         return this.layers.map((item) => {
             return {
+                id: item.id,
                 canvas: item.canvas,
                 isVisible: item.isVisible,
                 opacity: item.opacity,
@@ -1263,6 +1341,9 @@ export class KlCanvas {
                 mixModeStr: item.mixModeStr,
                 ...(item.compositeObj ? { compositeObj: item.compositeObj } : {}),
                 ...(item.isClipped ? { isClipped: item.isClipped } : {}),
+                ...(item.isFolder ? { isFolder: item.isFolder } : {}),
+                ...(item.isFolderOpen !== undefined ? { isFolderOpen: item.isFolderOpen } : {}),
+                ...(item.folderId ? { folderId: item.folderId } : {}),
             };
         });
     }
@@ -1322,12 +1403,16 @@ export class KlCanvas {
             height: this.height,
             layers: this.layers.map((layer) => {
                 return {
+                    id: layer.id,
                     name: layer.name,
                     isVisible: layer.isVisible,
                     opacity: layer.opacity,
                     mixModeStr: layer.mixModeStr,
                     image: layer.canvas,
                     isClipped: layer.isClipped,
+                    isFolder: layer.isFolder,
+                    isFolderOpen: layer.isFolderOpen,
+                    folderId: layer.folderId,
                 };
             }),
         };
@@ -1401,18 +1486,101 @@ export class KlCanvas {
 
     /**
      * Toggle whether a layer clips to the alpha of the layer below it.
-     * When clipped, the layer's visible area is limited to where the base layer is non-transparent.
      */
     setLayerClipped(layerIndex: number, isClipped: boolean): void {
         const targetLayer = this.layers[layerIndex];
         if (!targetLayer) return;
-        targetLayer.isClipped = isClipped || undefined; // store undefined for false to keep it clean
+        targetLayer.isClipped = isClipped || undefined;
 
         if (!this.klHistory.isPaused()) {
             this.klHistory.push({
                 layerMap: createLayerMap(this.layers, {
                     layerId: targetLayer.id,
                     attributes: ['isClipped'],
+                }),
+            });
+        }
+    }
+
+    /**
+     * Create a new folder (group) layer at the position directly below the selected layer.
+     * Returns the index of the new folder layer, or false if layer limit reached.
+     */
+    addFolder(selectedIndex?: number): false | number {
+        if (this.isLayerLimitReached()) {
+            return false;
+        }
+        // Folder goes below the selected layer (insert at selectedIndex, not above it)
+        const index = selectedIndex === undefined ? 0 : Math.max(0, selectedIndex);
+
+        const canvas = BB.canvas(this.width, this.height);
+        const context = BB.ctx(canvas);
+        const layerId = getNextLayerId();
+        const layer: TKlCanvasLayer = {
+            id: layerId,
+            index,
+            name: 'Group',
+            mixModeStr: 'source-over',
+            isVisible: true,
+            opacity: 1,
+            canvas,
+            context,
+            isFolder: true,
+            isFolderOpen: true,
+        };
+
+        this.layers.splice(index, 0, layer);
+        this.updateIndices();
+
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                activeLayerId: layerId,
+                layerMap: createLayerMap(
+                    this.layers,
+                    { attributes: ['index'] },
+                    {
+                        layerId,
+                        attributes: 'all',
+                        tiles: createFillColorTiles(this.width, this.height, 'transparent'),
+                    },
+                ),
+            });
+        }
+
+        return index;
+    }
+
+    /**
+     * Expand or collapse a folder layer.
+     */
+    setFolderOpen(layerIndex: number, isOpen: boolean): void {
+        const targetLayer = this.layers[layerIndex];
+        if (!targetLayer || !targetLayer.isFolder) return;
+        targetLayer.isFolderOpen = isOpen;
+
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                layerMap: createLayerMap(this.layers, {
+                    layerId: targetLayer.id,
+                    attributes: ['isFolderOpen'],
+                }),
+            });
+        }
+    }
+
+    /**
+     * Move a layer into a folder (by folder layer ID), or remove it from any folder (folderId = null).
+     */
+    setLayerFolder(layerIndex: number, folderId: string | null): void {
+        const targetLayer = this.layers[layerIndex];
+        if (!targetLayer || targetLayer.isFolder) return;
+        targetLayer.folderId = folderId ?? undefined;
+
+        if (!this.klHistory.isPaused()) {
+            this.klHistory.push({
+                layerMap: createLayerMap(this.layers, {
+                    layerId: targetLayer.id,
+                    attributes: ['folderId'],
                 }),
             });
         }

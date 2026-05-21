@@ -63,6 +63,37 @@ function composeLayer(
         }
     }
 
+    // Safe fallback for isBackground
+    let isBackground = false;
+    let backgroundColor: import('./history.types').THistoryEntryLayerComposed['backgroundColor'] = undefined;
+    for (let i = layerEntries.length - 1; i >= 0; i--) {
+        const entry = layerEntries[i];
+        if (entry && entry.isBackground !== undefined) {
+            isBackground = entry.isBackground;
+            backgroundColor = entry.backgroundColor;
+            break;
+        }
+    }
+
+    // Safe fallback for folder fields (may not be in older history entries)
+    let isFolder = false;
+    let isFolderOpen = true;
+    let folderId: string | null | undefined = undefined;
+    for (let i = layerEntries.length - 1; i >= 0; i--) {
+        const entry = layerEntries[i];
+        if (entry) {
+            if (isFolder === false && entry.isFolder !== undefined) {
+                isFolder = entry.isFolder;
+            }
+            if (isFolderOpen === true && entry.isFolderOpen !== undefined) {
+                isFolderOpen = entry.isFolderOpen;
+            }
+            if (folderId === undefined && entry.folderId !== undefined) {
+                folderId = entry.folderId;
+            }
+        }
+    }
+
     return {
         name: getLatestDefinedProp(layerEntries, 'name'),
         opacity: getLatestDefinedProp(layerEntries, 'opacity'),
@@ -71,6 +102,11 @@ function composeLayer(
         index: getLatestDefinedProp(layerEntries, 'index'),
         tiles: composeLayerTiles(layerEntries.map((item) => (item ? item.tiles : undefined))),
         isClipped,
+        isBackground,
+        backgroundColor,
+        isFolder,
+        isFolderOpen,
+        ...(folderId !== undefined ? { folderId: folderId ?? undefined } : {}),
     };
 }
 

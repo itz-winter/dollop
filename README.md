@@ -1,3 +1,41 @@
+<h1> <div align="center"> Dollop</div></h1>
+<div align="center">a fork of Klecks where unadded and rejected features live</div>
+<h3 align="center">
+  <a href="https://klecks.kelpw.ing">
+    Try out Dollop!
+  </a>
+  |
+  <a href="https://discord.gg/dcmsbXU5Yf">
+    Discord Server
+  </a> 
+  |
+  <a href="https://klecki.com">
+    Kleki
+  </a>
+</h3>
+
+The name Dollop means a small amount of something. It represents the idea of a portion of features that are not part of the main project, but still have value and can be enjoyed by users.
+
+The aim of Dollop is to provide a home to the features that are proposed for Klecks but not added. This can be for various reasons, e.g. the feature is not fully developed yet, it is not polished enough, it is too niche, it is too resource intensive, it does not fit the vision of Klecks, etc.
+
+It also allows users to try out these features without having to wait for them to be added to Klecks, or hosting their own. Not everyone has the technical knowledge to do that, and this exists to make it as easy as possible for them to try out these features.
+
+---
+
+Maintained by [kelpwing](https://github.com/itz-winter)
+> By artists, for artists.
+
+---
+
+**WARNING:** Dollop is not as polished as Klecks and may contain bugs, performance issues, or compatibility problems. It is not recommended to rely on Dollop for production purposes or in projects where stability is important. Use it at your own risk.
+
+---
+
+The following blob is the original `README.md` of Klecks.
+<h6>Last fetched: 27/05/2026 @ 16:18:03 PST</h6>
+
+---
+
 <div align="center">
  <img src="https://bitbof.com/stuff/2022-01-klecks/2026-04-06-logo.png" alt="Klecks" title="Klecks">
 </div>
@@ -35,6 +73,7 @@ Klecks (German for "splash of color", pronounced "clex") is the official open-so
 Klecks can run in standalone mode (e.g. on [kleki.com](https://kleki.com)), or embed (e.g. on [2draw.net](https://2draw.net)) for drawing communities.
 
 ## Features
+
 - Layers
 - Pen-support with pressure and stabilizer
 - Touch gestures
@@ -53,6 +92,7 @@ Created by developer/artist [bitbof](https://bitbof.com)
 ---
 
 # Commands
+
 - initialize via `npm ci` (requires node and npm to be installed already)
 - `npm run lang:build` - generate language files necessary to run Klecks
 - `npm run lang:build -- --missing` - generate language files and list all keys with a missing translation.
@@ -62,9 +102,11 @@ Created by developer/artist [bitbof](https://bitbof.com)
 - `npm run build:help` - build help page (when clicking the question mark) into `/dist/`
 
 # Embed
+
 Example usage of the embed can be found under: `/examples/embed/`
 
 # Docker
+
 To run Klecks (standalone) within a Docker container, run the following commands in project root:
 
 `docker-compose build`
@@ -76,37 +118,41 @@ It is then accessible through: http://localhost:5050
 # Contributing
 
 How you can contribute to this project:
+
 - Bug reporting (detailed bug reports that are reproducible)
 - Contribute to a translation (see below)
 - Donate to this project (Klecks, Kleki) [Donate](https://kleki.com/donate/)
 
 # Translations
+
 Are you a native speaker or have advanced skills in a language? Any contribution by you is highly encouraged and appreciated!
 
 ### Where are translation files?
+
 Translations are located in `src/languages` where each translation is its own JSON5 file, e.g. `de.json5` for German.
 Within such a file everything except `value` is to be kept in sync with `_base-en.json5`.
 
 ### Structure of a translation file
+
 ```json5
 {
   // key by which this text is referenced in code
   stabilizer: {
-    
     // A hint, further explaining the text
-    hint: 'Common feature in drawing software to make lines smoother',
-    
+    hint: "Common feature in drawing software to make lines smoother",
+
     // Original text (English)
-    original: 'Stabilizer',
-    
+    original: "Stabilizer",
+
     // Translated text
-    value: '抖动修正'
+    value: "抖动修正",
   },
   // ...
 }
 ```
 
 ### Creating/editing a translation
+
 To **create a new translation** run `npm run lang:add <code>`, which creates `src/languages/<code>.json5`. You find all
 (ISO 639-1) language codes in `src/languages/languages.json`. The generated file will already include everything except `value`.
 To **edit an existing translation**, simply edit one of the files in `src/languages`. If a language file is out of sync with
@@ -121,6 +167,7 @@ fit the context of the application. Note, some texts are only visible in the sta
 the embed-version.
 
 ### List of commands
+
 - `npm run lang:add <code>` - creates new language file `src/languages/<code>.json5`.
   - See (ISO 639-1) language codes in `src/languages/languages.json`
 - `npm run lang:sync <code>` - synchronizes with base file. (TODO)
@@ -128,6 +175,7 @@ the embed-version.
   - Problems are printed to the command line output
 
 # Help fund this project
+
 Klecks and Kleki are community funded. [Donate today](https://kleki.com/donate/)
 
 # License

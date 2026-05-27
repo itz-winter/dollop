@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 20 20">
+  <!-- Bottom layer (base) -->
+  <rect x="5" y="11" width="12" height="7" rx="1" fill="currentColor" opacity="0.4"/>
+  <!-- Top layer (clipped) with dashed border -->
+  <rect x="3" y="3" width="12" height="7" rx="1" fill="currentColor" opacity="0.85" stroke-dasharray="2,1.5" stroke="currentColor" stroke-width="1" fill-opacity="0.5"/>
+  <!-- Down arrow indicating clipping direction -->
+  <path d="M16 8 L16 12 M14 10 L16 12 L18 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

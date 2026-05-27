@@ -165,6 +165,7 @@ export class KlAppImportHandler {
                             opacity: layer.opacity,
                             mixModeStr: layer.mixModeStr,
                             image: layer.image,
+                            isClipped: layer.isClipped,
                         };
                     }),
                 });

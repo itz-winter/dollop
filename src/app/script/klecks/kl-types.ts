@@ -97,6 +97,7 @@ export type TKlProjectLayer = {
     opacity: number; // 0 - 1
     mixModeStr?: TMixMode; // default "source-over"
     image: HTMLImageElement | HTMLCanvasElement | TLayerFill | THistoryEntryLayerTile[]; // image already loaded
+    isClipped?: boolean; // if true: clips to alpha of the layer below
 };
 
 // A UUID, to make the project identifiable. (Not the recovery indexedDb key)
@@ -304,6 +305,7 @@ export type TKlPsdLayer = {
     mixModeStr: TMixMode;
     opacity: number;
     image: HTMLCanvasElement;
+    isClipped?: boolean; // if true: clips to alpha of the layer below
 };
 
 /**

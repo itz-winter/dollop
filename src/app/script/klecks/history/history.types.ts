@@ -33,6 +33,9 @@ export type THistoryEntryLayer = {
 
     // if contents changed
     tiles?: (THistoryEntryLayerTile | undefined)[]; // undefined if tile did not change
+
+    // if clipping changed (layer clips to layer below)
+    isClipped?: boolean;
 };
 export type THistoryEntryData = {
     // if project changed
@@ -68,6 +71,7 @@ export type THistoryEntry = {
 
 export type THistoryEntryLayerComposed = Omit<Required<THistoryEntryLayer>, 'tiles'> & {
     tiles: THistoryEntryLayerTile[];
+    isClipped: boolean;
 };
 
 export type THistoryEntryDataComposed = Omit<Required<THistoryEntryData>, 'layerMap'> & {

@@ -572,6 +572,8 @@ export class KlApp {
         this.easelBrush = new EaselBrush({
             radius: 5,
             onLineStart: (e) => {
+                // Block drawing on background layers
+                if (currentLayer.isBackground) return;
                 // expects TDrawEvent
                 drawEventChain.chainIn({
                     type: 'down',

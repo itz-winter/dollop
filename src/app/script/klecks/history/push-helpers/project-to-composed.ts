@@ -40,6 +40,7 @@ export function projectToComposed(project: TKlProject): THistoryEntryDataCompose
                     mixModeStr: layer.mixModeStr ?? 'source-over',
                     index,
                     tiles,
+                    isClipped: layer.isClipped ?? false,
                 },
             ];
         }),

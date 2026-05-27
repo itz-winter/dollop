@@ -106,7 +106,15 @@ export function readPsd(psdObj: Psd): TKlPsd {
         if (groupObj.children) {
             for (let i = 0; i < groupObj.children.length; i++) {
                 const item = groupObj.children[i];
-                if (item.clipping || item.adjustment) {
+                if (item.adjustment) {
+                    continue;
+                }
+                if (item.clipping) {
+                    // simple clipping layers are now imported as separate clipped layers
+                    if (!item.children) {
+                        result++;
+                    }
+                    // group clipping layers get baked into the base → not counted
                     continue;
                 }
 
@@ -176,7 +184,7 @@ export function readPsd(psdObj: Psd): TKlPsd {
                     (item.children || item.canvas) &&
                     psdGroupObj.children[i + 1] &&
                     psdGroupObj.children[i + 1].clipping;
-                if (hasClipping) {
+                if (hasClipping && item.children) {
                     addWarning('clipping');
                 }
 
@@ -310,69 +318,6 @@ export function readPsd(psdObj: Psd): TKlPsd {
                     ctx.drawImage(item.mask.canvas, item.mask.left, item.mask.top);
                 }
 
-                // clipping
-                if (hasClipping) {
-                    if (item.right === undefined) {
-                        throw new Error('item.right undefined');
-                    }
-                    if (item.left === undefined) {
-                        throw new Error('item.left undefined');
-                    }
-                    if (item.bottom === undefined) {
-                        throw new Error('item.bottom undefined');
-                    }
-                    if (item.top === undefined) {
-                        throw new Error('item.top undefined');
-                    }
-                    if (item.canvas === undefined) {
-                        throw new Error('item.canvas undefined');
-                    }
-                    const clippingCanvas = createCanvas(
-                        item.right - item.left,
-                        item.bottom - item.top,
-                    );
-                    const clippingCtx = BB.ctx(clippingCanvas);
-                    clippingCtx.drawImage(item.canvas, 0, 0);
-
-                    for (
-                        let e = i + 1;
-                        e < psdGroupObj.children.length && psdGroupObj.children[e].clipping;
-                        e++
-                    ) {
-                        const clippingItem = psdGroupObj.children[e];
-                        if (clippingItem.opacity === 0 || clippingItem.hidden) {
-                            continue;
-                        }
-                        if (clippingItem.blendMode === undefined) {
-                            throw new Error('clippingItem.blendMode undefined');
-                        }
-                        if (clippingItem.opacity === undefined) {
-                            throw new Error('clippingItem.opacity undefined');
-                        }
-                        if (clippingItem.canvas === undefined) {
-                            throw new Error('clippingItem.canvas undefined');
-                        }
-                        if (clippingItem.left === undefined) {
-                            throw new Error('clippingItem.left undefined');
-                        }
-                        if (clippingItem.top === undefined) {
-                            throw new Error('clippingItem.top undefined');
-                        }
-                        clippingCtx.globalCompositeOperation = getMixModeStr(
-                            clippingItem.blendMode,
-                        );
-                        clippingCtx.globalAlpha = clippingItem.opacity;
-                        clippingCtx.drawImage(
-                            clippingItem.canvas,
-                            clippingItem.left - item.left,
-                            clippingItem.top - item.top,
-                        );
-                    }
-
-                    ctx.globalCompositeOperation = 'source-atop';
-                    ctx.drawImage(clippingCanvas, item.left, item.top);
-                }
-
                 // group mask
                 if (psdGroupObj.mask) {
                     ctx.globalCompositeOperation =
@@ -420,6 +365,83 @@ export function readPsd(psdObj: Psd): TKlPsd {
                         mixModeStr: getMixModeStr(item.blendMode),
                         image: canvas,
                     });
+
+                    // Push simple clipping layers as separate isClipped layers
+                    if (hasClipping && !item.children) {
+                        for (
+                            let e = i + 1;
+                            e < psdGroupObj.children.length && psdGroupObj.children[e].clipping;
+                            e++
+                        ) {
+                            const clippingItem = psdGroupObj.children[e];
+                            if (clippingItem.adjustment) {
+                                addWarning('adjustment');
+                                continue;
+                            }
+                            if (clippingItem.children) {
+                                // clipping group on a simple base — bake warning, skip
+                                addWarning('clipping');
+                                continue;
+                            }
+                            if (clippingItem.blendMode === undefined) {
+                                throw new Error('clippingItem.blendMode undefined');
+                            }
+                            if (clippingItem.opacity === undefined) {
+                                throw new Error('clippingItem.opacity undefined');
+                            }
+                            if (clippingItem.name === undefined) {
+                                throw new Error('clippingItem.name undefined');
+                            }
+
+                            const clCanvas = createCanvas(result.width, result.height);
+                            const clCtx = BB.ctx(clCanvas);
+                            if (clippingItem.canvas) {
+                                if (clippingItem.left === undefined) {
+                                    throw new Error('clippingItem.left undefined');
+                                }
+                                if (clippingItem.top === undefined) {
+                                    throw new Error('clippingItem.top undefined');
+                                }
+                                clCtx.drawImage(clippingItem.canvas, clippingItem.left, clippingItem.top);
+                            }
+
+                            // mask on the clipping layer
+                            if (clippingItem.mask) {
+                                addWarning('mask');
+                                if (clippingItem.mask.canvas === undefined) {
+                                    throw new Error('clippingItem.mask.canvas undefined');
+                                }
+                                if (clippingItem.mask.defaultColor === undefined) {
+                                    throw new Error('clippingItem.mask.defaultColor undefined');
+                                }
+                                if (clippingItem.mask.left === undefined) {
+                                    throw new Error('clippingItem.mask.left undefined');
+                                }
+                                if (clippingItem.mask.top === undefined) {
+                                    throw new Error('clippingItem.mask.top undefined');
+                                }
+                                prepareMask(clippingItem.mask.canvas, clippingItem.mask.defaultColor);
+                                clCtx.globalCompositeOperation =
+                                    clippingItem.mask.defaultColor === 0
+                                        ? 'destination-in'
+                                        : 'destination-out';
+                                clCtx.drawImage(
+                                    clippingItem.mask.canvas,
+                                    clippingItem.mask.left,
+                                    clippingItem.mask.top,
+                                );
+                            }
+
+                            resultArr.push({
+                                name: clippingItem.name,
+                                isVisible: !clippingItem.hidden && groupIsVisible,
+                                opacity: clippingItem.opacity * groupOpacity,
+                                mixModeStr: getMixModeStr(clippingItem.blendMode),
+                                image: clCanvas,
+                                isClipped: true,
+                            });
+                        }
+                    }
                 }
             }
         }
@@ -468,6 +490,7 @@ export function klPsdToKlProject(klPsd: TKlPsd): TKlProject {
                 opacity: item.opacity,
                 mixModeStr: item.mixModeStr,
                 image: item.image,
+                isClipped: item.isClipped,
             };
         });
     } else {

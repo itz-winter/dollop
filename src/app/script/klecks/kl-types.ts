@@ -305,6 +305,7 @@ export type TKlPsdLayer = {
     mixModeStr: TMixMode;
     opacity: number;
     image: HTMLCanvasElement;
+    isClipped?: boolean; // if true: clips to alpha of the layer below
 };
 
 /**

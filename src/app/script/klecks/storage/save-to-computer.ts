@@ -75,20 +75,32 @@ export class SaveToComputer {
             }
         } else if (format === 'psd') {
             const layerArr = this.klCanvas.getLayersFast();
+            const width = this.klCanvas.getWidth();
+            const height = this.klCanvas.getHeight();
 
             const psdConfig: Psd = {
-                width: this.klCanvas.getWidth(),
-                height: this.klCanvas.getHeight(),
+                width,
+                height,
                 children: [],
                 canvas: this.klCanvas.getCompleteCanvas(1),
             };
             for (let i = 0; i < layerArr.length; i++) {
                 const item = layerArr[i];
+                // If a compositeObj is active, bake it into a fresh full-size canvas
+                // so the exported layer data exactly matches what is rendered on screen
+                // (pixel-perfect, no unfilled border artifacts).
+                let canvas = item.canvas;
+                if (item.compositeObj) {
+                    canvas = BB.canvas(width, height);
+                    const ctx = BB.ctx(canvas);
+                    ctx.drawImage(item.canvas, 0, 0);
+                    item.compositeObj.draw(ctx);
+                }
                 psdConfig.children!.push({
                     name: item.name,
                     hidden: !item.isVisible,
                     opacity: item.opacity,
-                    canvas: item.canvas,
+                    canvas,
                     blendMode: KL.PSD.blendKlToPsd(item.mixModeStr),
                     left: 0,
                     top: 0,

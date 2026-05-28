@@ -1268,6 +1268,10 @@ export class KlApp {
         let _setActiveLeftBtn: ((id: string) => void) | undefined;
         let _leftUndoBtn: HTMLElement | undefined;
         let _leftRedoBtn: HTMLElement | undefined;
+        // Reference to the top color panel's container div; set when colorDiv is created.
+        // Used in activateTool to reassert the color slider back to the top panel
+        // (tool UIs like fillUi.setIsVisible(true) reparent it into their own colorDiv).
+        let _colorDivRef: HTMLElement | undefined;
 
         const doZoomIn = () => {
             const oldScale = this.easel.getTransform().scale;
@@ -1317,6 +1321,14 @@ export class KlApp {
                 mainTabRow?.open(activeStr);
             }
             updateMainTabVisibility();
+            // Reassert color slider back to the top panel — tool UIs (fillUi, gradientUi, etc.)
+            // call setIsVisible(true) which reparents the color slider into their own colorDiv.
+            if (_colorDivRef) {
+                _colorDivRef.append(
+                    this.klColorSlider.getElement(),
+                    this.klColorSlider.getOutputElement(),
+                );
+            }
             this.klColorSlider.setIsEyedropping(false);
             this.mobileColorUi.setIsEyedropping(false);
             _setActiveLeftBtn?.(activeStr);
@@ -1393,13 +1405,13 @@ export class KlApp {
         const brushDiv = BB.el();
         const colorDiv = BB.el({
             css: {
-                margin: '10px',
+                margin: '0',
                 display: 'flex',
-                flexWrap: 'wrap',
-                justifyContent: 'space-between',
-                alignItems: 'flex-end',
+                flexDirection: 'column',
+                gap: '4px',
             },
         });
+        _colorDivRef = colorDiv;
         const toolspaceStabilizerRow = new KL.ToolspaceStabilizerRow({
             smoothing: 1,
             onSelect: (v) => {
@@ -2108,6 +2120,21 @@ export class KlApp {
         this.layersUi.setIsVisible(true);
         this.layersUi.update();
 
+        // mainTabRow initialization called onClose() for all non-active tabs, hiding them.
+        // In the new permanent-panel layout, editUi/settingsUi/fileUi are always visible.
+        editUi.show();
+        settingsUi.getElement().style.display = 'block';
+        if (fileUi) {
+            fileUi.getElement().style.display = 'block';
+            fileUi.setIsVisible(true);
+        }
+        // Reassert color slider in top color panel after mainTabRow initialization
+        // (some tool tabs steal it into their own colorDiv on setIsVisible(true))
+        colorDiv.append(
+            this.klColorSlider.getElement(),
+            this.klColorSlider.getOutputElement(),
+        );
+
         // Collapsible panel header factory
         const makePanelHeader = (title: string, contentEl: HTMLElement): HTMLElement => {
             let collapsed = false;
@@ -2154,12 +2181,18 @@ export class KlApp {
             return panel;
         };
 
-        // Color picker at top of dock (compact, no header)
-        const colorPanelEl = BB.el({ className: 'kl-panel-body', css: { padding: '8px 10px 4px' } });
+        // Color picker — collapsible, always at top of dock
+        this.layerPreview.setIsVisible(true);
+        const colorPanelEl = BB.el({ className: 'kl-panel-body', css: { padding: '8px 8px 6px' } });
         colorPanelEl.append(colorDiv);
-        this.toolspaceInner.append(colorPanelEl);
+        this.toolspaceInner.append(makeDockPanel('Color', colorPanelEl));
 
-        // Tool options panel
+        // Navigator — layer preview thumbnail
+        const navigatorBody = BB.el({ className: 'kl-panel-body', css: { padding: '6px' } });
+        navigatorBody.append(this.layerPreview.getElement());
+        this.toolspaceInner.append(makeDockPanel('Navigator', navigatorBody, { startCollapsed: true }));
+
+        // Tool options — shows the active tool's controls
         const toolOptionsPanelBody = BB.el({ className: 'kl-panel-body' });
         BB.append(toolOptionsPanelBody, [
             brushDiv,
@@ -2170,9 +2203,9 @@ export class KlApp {
             shapeUi.getElement(),
             klAppSelect.getSelectUi().getElement(),
         ]);
-        this.toolspaceInner.append(makeDockPanel(LANG('tool-brush'), toolOptionsPanelBody));
+        this.toolspaceInner.append(makeDockPanel('Tool Options', toolOptionsPanelBody));
 
-        // Layers panel
+        // Layers — grows to fill remaining dock space
         this.toolspaceInner.append(makeDockPanel(LANG('layers'), this.layersUi.getElement(), { grow: true }));
 
         // Edit panel
@@ -2193,15 +2226,15 @@ export class KlApp {
 
         // ---- Left bar tool buttons ----
         const toolDefs: Array<{ id: TKlAppToolId; img: string; label: string } | 'sep'> = [
-            { id: 'brush', img: toolPaintImg, label: LANG('tool-brush') },
-            { id: 'paintBucket', img: toolFillImg, label: LANG('tool-paint-bucket') },
-            { id: 'gradient', img: toolGradientImg, label: LANG('tool-gradient') },
-            { id: 'text', img: toolTextImg, label: LANG('tool-text') },
-            { id: 'shape', img: toolShapeImg, label: LANG('tool-shape') },
-            { id: 'select', img: toolSelectImg, label: LANG('tool-select') },
+            { id: 'brush',       img: toolPaintImg,    label: LANG('tool-brush') },
+            { id: 'paintBucket', img: toolFillImg,     label: LANG('tool-paint-bucket') },
+            { id: 'gradient',    img: toolGradientImg, label: LANG('tool-gradient') },
+            { id: 'text',        img: toolTextImg,     label: LANG('tool-text') },
+            { id: 'shape',       img: toolShapeImg,    label: LANG('tool-shape') },
+            { id: 'select',      img: toolSelectImg,   label: LANG('tool-select') },
             'sep',
-            { id: 'eyedropper', img: toolPickerImg, label: LANG('eyedropper') },
-            { id: 'hand', img: toolHandImg, label: LANG('tool-hand') },
+            { id: 'eyedropper',  img: toolPickerImg,   label: LANG('eyedropper') },
+            { id: 'hand',        img: toolHandImg,     label: LANG('tool-hand') },
             'sep',
         ];
 
@@ -2213,11 +2246,10 @@ export class KlApp {
                 continue;
             }
             const btn = BB.el({ className: 'kl-left-tool-btn', title: def.label });
-            const icon = BB.el({
+            btn.append(BB.el({
                 className: 'kl-left-tool-icon dark-invert',
                 css: { backgroundImage: `url('${def.img}')` },
-            });
-            btn.append(icon);
+            }));
             btn.addEventListener('click', () => activateTool(def.id));
             leftBtnMap[def.id] = btn;
             this.leftBar.append(btn);
@@ -2231,7 +2263,7 @@ export class KlApp {
         };
         _setActiveLeftBtn('brush');
 
-        // Undo / Redo / Zoom in left bar
+        // ---- Action buttons at bottom of left bar ----
         this.leftBar.append(BB.el({ className: 'kl-left-sep' }));
 
         _leftUndoBtn = BB.el({ className: 'kl-left-tool-btn kl-left-tool-btn--disabled', title: LANG('undo') });

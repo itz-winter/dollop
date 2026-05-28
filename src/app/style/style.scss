@@ -152,9 +152,9 @@ a:not([href]):hover {
     border-bottom: 1px solid var(--separator-color);
     user-select: none;
     touch-action: none;
-    // NOTE: no overflow:hidden here — dropdown menus need to escape the bar
+    // NOTE: no overflow:hidden — dropdown menus must escape the bar
     position: relative;
-    z-index: 100;
+    z-index: 200;
 }
 
 .kl-workspace {
@@ -164,7 +164,7 @@ a:not([href]):hover {
     overflow: hidden;
 }
 
-// Vertical icon tool palette
+// ---- Left vertical icon toolbar ----
 .kl-left-bar {
     width: vars.$leftBarWidth;
     min-width: vars.$leftBarWidth;
@@ -176,14 +176,13 @@ a:not([href]):hover {
     border-right: 1px solid var(--separator-color);
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 4px 0;
-    gap: 2px;
+    padding: 3px 0;
+    gap: 1px;
     user-select: none;
     touch-action: none;
-
-    // scrollbar
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.15) transparent;
+    z-index: 10;
 
     &--flip {
         border-right: none;
@@ -193,64 +192,65 @@ a:not([href]):hover {
 }
 
 .kl-left-tool-btn {
-    width: 36px;
-    height: 36px;
-    border-radius: 6px;
+    width: 38px;
+    height: 38px;
+    border-radius: 5px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     flex-shrink: 0;
-    transition: background 0.1s;
+    transition: background 0.08s;
     position: relative;
 
     .kl-left-tool-icon {
         width: 22px;
         height: 22px;
         pointer-events: none;
-        opacity: 0.65;
+        opacity: 0.62;
         background-size: contain;
         background-repeat: no-repeat;
         background-position: center;
+        transition: opacity 0.08s;
     }
 
     &:hover {
-        background: rgba(0, 0, 0, 0.08);
+        background: rgba(0, 0, 0, 0.07);
+        .kl-left-tool-icon { opacity: 0.88; }
+    }
 
-        .kl-left-tool-icon {
-            opacity: 0.9;
-        }
+    &:active {
+        background: rgba(0, 0, 0, 0.13);
     }
 
     &--active {
         background: var(--active-highlight-color);
+        border-radius: 5px;
 
         .kl-left-tool-icon {
             opacity: 1;
             filter: brightness(0) invert(1);
         }
 
-        &:hover {
-            background: var(--active-highlight-color);
-        }
+        &:hover { background: var(--active-highlight-color); }
     }
 
     &--disabled {
-        opacity: 0.3;
+        opacity: 0.28;
         pointer-events: none;
         cursor: default;
     }
 }
 
 .kl-left-sep {
-    width: 26px;
+    width: 28px;
     height: 1px;
     background: var(--separator-color);
-    margin: 3px 0;
+    margin: 2px 0;
     flex-shrink: 0;
 }
 
-// Canvas container
+// ---- Canvas area ----
 .kl-canvas-area {
     flex: 1;
     position: relative;
@@ -259,7 +259,7 @@ a:not([href]):hover {
     background: var(--body-bg-color);
 }
 
-// Right panel dock — replaces .kl-toolspace in new layout
+// ---- Right panel dock ----
 .kl-right-dock {
     display: flex;
     flex-direction: column;
@@ -270,6 +270,7 @@ a:not([href]):hover {
     position: relative;
     user-select: none;
     touch-action: none;
+    z-index: 10;
 
     &--flip {
         border-left: none;
@@ -284,7 +285,7 @@ a:not([href]):hover {
     left: -3px;
     bottom: 0;
     width: 6px;
-    z-index: 10;
+    z-index: 20;
     cursor: ew-resize;
 
     .kl-right-dock--flip & {
@@ -294,7 +295,7 @@ a:not([href]):hover {
 
     &:hover,
     &:active {
-        background: rgba(61, 124, 245, 0.3);
+        background: rgba(61, 124, 245, 0.25);
     }
 }
 
@@ -303,11 +304,13 @@ a:not([href]):hover {
     overflow-y: auto;
     overflow-x: hidden;
     min-height: 0;
+    display: flex;
+    flex-direction: column;
     scrollbar-width: thin;
-    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+    scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
 }
 
-// Revised panel system for right dock
+// ---- Collapsible dock panels ----
 .kl-panel {
     display: flex;
     flex-direction: column;
@@ -317,7 +320,7 @@ a:not([href]):hover {
     &--grow {
         flex-shrink: 1;
         flex-grow: 1;
-        min-height: 100px;
+        min-height: 120px;
         overflow: hidden;
 
         > .kl-panel-body {
@@ -325,7 +328,7 @@ a:not([href]):hover {
             overflow-y: auto;
             min-height: 0;
             scrollbar-width: thin;
-            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+            scrollbar-color: rgba(0, 0, 0, 0.18) transparent;
         }
     }
 
@@ -339,48 +342,37 @@ a:not([href]):hover {
     min-height: vars.$panelHeaderHeight;
     display: flex;
     align-items: center;
-    padding: 0 8px 0 6px;
-    background: rgba(0, 0, 0, 0.045);
+    padding: 0 8px 0 8px;
+    background: rgba(0, 0, 0, 0.035);
     border-bottom: 1px solid var(--separator-color);
     cursor: pointer;
     flex-shrink: 0;
-    gap: 4px;
+    gap: 5px;
+    user-select: none;
 
     &:hover {
-        background: rgba(0, 0, 0, 0.075);
-    }
-
-    &__drag {
-        opacity: 0.3;
-        font-size: 13px;
-        line-height: 1;
-        cursor: grab;
-        padding-right: 2px;
-
-        &:hover {
-            opacity: 0.65;
-        }
+        background: rgba(0, 0, 0, 0.065);
     }
 
     &__title {
         flex: 1;
-        font-size: 10px;
+        font-size: 10.5px;
         font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.07em;
-        color: rgba(0, 0, 0, 0.5);
+        letter-spacing: 0.06em;
+        color: rgba(0, 0, 0, 0.45);
     }
 
     &__chevron {
-        font-size: 10px;
-        color: rgba(0, 0, 0, 0.4);
-        width: 14px;
+        font-size: 9px;
+        color: rgba(0, 0, 0, 0.35);
+        width: 12px;
         text-align: center;
+        flex-shrink: 0;
     }
 }
 
 .kl-panel-body {
-    // base: shrinks to content height
     overflow: hidden;
 }
 

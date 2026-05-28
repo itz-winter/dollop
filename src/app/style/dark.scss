@@ -39,6 +39,75 @@
         }
     }
 
+    // New layout dark overrides
+    .kl-top-bar,
+    .kl-left-bar {
+        background: var(--ui-bg-dark);
+    }
+
+    .kl-left-bar {
+        border-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .kl-left-tool-btn {
+        &:hover {
+            background: rgba(255, 255, 255, 0.07);
+        }
+
+        &--active {
+            background: var(--active-highlight-color);
+
+            &:hover {
+                background: var(--active-highlight-color);
+            }
+        }
+
+        .kl-left-tool-icon {
+            opacity: 0.75;
+        }
+    }
+
+    .kl-left-sep {
+        background: rgba(255, 255, 255, 0.1);
+    }
+
+    .kl-canvas-area {
+        background: #1e1e1e;
+    }
+
+    .kl-right-dock {
+        background: var(--ui-bg-dark);
+        border-color: rgba(0, 0, 0, 0.5);
+    }
+
+    .kl-right-dock-handle {
+        &:hover,
+        &:active {
+            background: rgba(100, 160, 255, 0.3);
+        }
+    }
+
+    .kl-panel {
+        border-bottom-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .kl-panel-header {
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom-color: rgba(0, 0, 0, 0.3);
+
+        &__title {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        &__chevron {
+            color: rgba(255, 255, 255, 0.3);
+        }
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+    }
+
     .kl-toolspace-row {
         background: rgba(0, 0, 0, 0.2);
         box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);

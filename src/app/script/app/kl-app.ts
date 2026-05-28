@@ -39,6 +39,10 @@ import toolShapeImg from 'url:/src/app/img/ui/tool-shape.svg';
 import toolSelectImg from 'url:/src/app/img/ui/tool-select.svg';
 import tabSettingsImg from 'url:/src/app/img/ui/tab-settings.svg';
 import tabEditImg from 'url:/src/app/img/ui/tab-edit.svg';
+import toolPickerImg from 'url:/src/app/img/ui/tool-picker.svg';
+import toolZoomInImg from 'url:/src/app/img/ui/tool-zoom-in.svg';
+import toolZoomOutImg from 'url:/src/app/img/ui/tool-zoom-out.svg';
+import toolUndoImg from 'url:/src/app/img/ui/tool-undo.svg';
 import { LayersUi } from '../klecks/ui/tool-tabs/layers-ui/layers-ui';
 import { TVector2D } from '../bb/bb-types';
 import { createConsoleApi } from './console-api';
@@ -137,6 +141,9 @@ export class KlApp {
     private readonly toolspace: HTMLElement;
     private readonly toolspaceInner: HTMLElement;
     private toolWidth: number = 271;
+    private readonly topBarHeight: number = 36;
+    private readonly leftBarWidth: number = 44;
+    private leftBar!: HTMLElement;
     private readonly toolspaceTopRow: ToolspaceTopRow | EmbedToolspaceTopRow;
     private readonly bottomBar: HTMLElement | undefined;
     private readonly layersUi: LayersUi;
@@ -161,45 +168,36 @@ export class KlApp {
             }
         }
         this.mobileUi.setOrientation(this.uiLayout);
+
+        const dockWidth = this.toolWidth;
+        const leftW = this.leftBarWidth;
+        const topH = this.topBarHeight;
+
         if (this.uiWidth < this.collapseThreshold) {
             this.mobileUi.setIsVisible(true);
             if (this.mobileUi.getToolspaceIsOpen()) {
-                if (this.uiLayout === 'left') {
-                    css(this.easel.getElement(), {
-                        left: this.toolWidth + 'px',
-                    });
-                } else {
-                    css(this.easel.getElement(), {
-                        left: '0',
-                    });
-                }
-                this.toolspace.style.display = 'block';
-                this.easel.setSize(Math.max(0, this.uiWidth - this.toolWidth), this.uiHeight);
+                this.toolspace.style.display = '';
+                this.easel.setSize(
+                    Math.max(0, this.uiWidth - leftW - dockWidth),
+                    Math.max(0, this.uiHeight - topH),
+                );
                 this.statusOverlay.setWide(false);
             } else {
-                if (this.uiLayout === 'left') {
-                    css(this.easel.getElement(), {
-                        left: '0',
-                    });
-                } else {
-                    css(this.easel.getElement(), {
-                        left: '0',
-                    });
-                }
                 this.toolspace.style.display = 'none';
-                this.easel.setSize(Math.max(0, this.uiWidth), this.uiHeight);
+                this.easel.setSize(
+                    Math.max(0, this.uiWidth - leftW),
+                    Math.max(0, this.uiHeight - topH),
+                );
                 this.statusOverlay.setWide(true);
             }
         } else {
             this.mobileColorUi.closeColorPicker();
             this.mobileUi.setIsVisible(false);
-            if (this.uiLayout === 'left') {
-                css(this.easel.getElement(), {
-                    left: this.toolWidth + 'px',
-                });
-            }
-            this.toolspace.style.display = 'block';
-            this.easel.setSize(Math.max(0, this.uiWidth - this.toolWidth), this.uiHeight);
+            this.toolspace.style.display = '';
+            this.easel.setSize(
+                Math.max(0, this.uiWidth - leftW - dockWidth),
+                Math.max(0, this.uiHeight - topH),
+            );
             this.statusOverlay.setWide(false);
         }
         this.mobileUi.update();
@@ -218,24 +216,11 @@ export class KlApp {
     }
 
     private updateUi(): void {
-        this.toolspace.classList.toggle('kl-toolspace--left', this.uiLayout === 'left');
-        this.toolspace.classList.toggle('kl-toolspace--right', this.uiLayout === 'right');
-        if (this.uiLayout === 'left') {
-            css(this.toolspace, {
-                left: '0',
-                right: '',
-            });
-            css(this.easel.getElement(), {
-                left: this.toolWidth + 'px',
-            });
-        } else {
-            css(this.toolspace, {
-                left: '',
-                right: '0',
-            });
-            css(this.easel.getElement(), {
-                left: '0',
-            });
+        const isLeft = this.uiLayout === 'left';
+        // Flip dock and left bar sides when 'left' layout
+        this.toolspace.classList.toggle('kl-right-dock--flip', isLeft);
+        if (this.leftBar) {
+            this.leftBar.classList.toggle('kl-left-bar--flip', isLeft);
         }
         this.statusOverlay.setUiState(this.uiLayout);
         this.layerPreview.setUiState(this.uiLayout);
@@ -1076,12 +1061,8 @@ export class KlApp {
         });
 
         this.toolspace = BB.el({
-            className: 'kl-toolspace',
+            className: 'kl-right-dock kl-right-dock--right',
             css: {
-                position: 'absolute',
-                right: '0',
-                top: '0',
-                bottom: '0',
                 width: this.toolWidth + 'px',
                 overflow: 'hidden',
                 userSelect: 'none',
@@ -1090,12 +1071,13 @@ export class KlApp {
         });
         this.toolspaceInner = BB.el({
             parent: this.toolspace,
+            className: 'kl-dock-scroll',
         });
 
         // ---- resize handle ----
         {
             const handle = BB.el({
-                className: 'kl-toolspace-resize-handle',
+                className: 'kl-right-dock-handle',
             });
             this.toolspace.append(handle);
             let startX = 0;
@@ -1115,9 +1097,6 @@ export class KlApp {
                         this.toolWidth = BB.clamp(startWidth + dx, 150, 600);
                         this.toolspace.style.width = this.toolWidth + 'px';
                         this.updateCollapse();
-                        if (this.uiLayout === 'left') {
-                            css(this.easel.getElement(), { left: this.toolWidth + 'px' });
-                        }
                     } else if (event.type === 'pointerup') {
                         LocalStorage.setItem('klecks-toolWidth', String(this.toolWidth));
                     }
@@ -1175,12 +1154,16 @@ export class KlApp {
             this.rootEl.append(overlayToolspace.getElement());
         }, 0);
 
-        BB.append(this.rootEl, [
-            this.easel.getElement(),
-            // this.klCanvasWorkspace.getElement(),
-            this.toolspace,
-            this.mobileUi.getElement(),
-        ]);
+        const klTopBar = BB.el({ className: 'kl-top-bar' });
+        const klCanvasArea = BB.el({ className: 'kl-canvas-area' });
+        this.leftBar = BB.el({ className: 'kl-left-bar' });
+        const klWorkspace = BB.el({ className: 'kl-workspace' });
+        const klLayout = BB.el({ className: 'kl-layout' });
+
+        klCanvasArea.append(this.easel.getElement());
+        BB.append(klWorkspace, [this.leftBar, klCanvasArea, this.toolspace]);
+        BB.append(klLayout, [klTopBar, klWorkspace]);
+        BB.append(this.rootEl, [klLayout, this.mobileUi.getElement()]);
 
         if (this.embed) {
             this.toolspaceTopRow = new EmbedToolspaceTopRow({
@@ -1277,64 +1260,64 @@ export class KlApp {
                 },
             });
         }
-        this.toolspaceTopRow.getElement().style.marginBottom = '10px';
-        this.toolspaceInner.append(this.toolspaceTopRow.getElement());
+        // Top bar gets the menu row (flex-fill, no bottom margin needed)
+        css(this.toolspaceTopRow.getElement(), { flex: '1', marginBottom: '0' });
+        klTopBar.append(this.toolspaceTopRow.getElement());
+
+        // Closures for left bar button state — populated later in constructor
+        let _setActiveLeftBtn: ((id: string) => void) | undefined;
+        let _leftUndoBtn: HTMLElement | undefined;
+        let _leftRedoBtn: HTMLElement | undefined;
+
+        const doZoomIn = () => {
+            const oldScale = this.easel.getTransform().scale;
+            const newScale = zoomByStep(oldScale, keyListener.isPressed('shift') ? 1 / 8 : 1 / 2);
+            this.easel.scale(newScale / oldScale);
+        };
+        const doZoomOut = () => {
+            const oldScale = this.easel.getTransform().scale;
+            const newScale = zoomByStep(oldScale, keyListener.isPressed('shift') ? -1 / 8 : -1 / 2);
+            this.easel.scale(newScale / oldScale);
+        };
+
+        const activateTool = (activeStr: TKlAppToolId): void => {
+            if (activeStr !== 'hand') {
+                applyUncommitted();
+            }
+            if (activeStr === 'brush') {
+                this.easel.setTool('brush');
+            } else if (activeStr === 'hand') {
+                this.easel.setTool('hand');
+            } else if (activeStr === 'paintBucket') {
+                this.easel.setTool('paintBucket');
+            } else if (activeStr === 'gradient') {
+                this.easel.setTool('gradient');
+            } else if (activeStr === 'text') {
+                this.easel.setTool('text');
+            } else if (activeStr === 'shape') {
+                this.easel.setTool('shape');
+            } else if (activeStr === 'select') {
+                this.easel.setTool('select');
+            } else {
+                throw new Error('unknown activeStr');
+            }
+            this.toolspaceToolRow.setActive(activeStr);
+            mainTabRow?.open(activeStr);
+            updateMainTabVisibility();
+            this.klColorSlider.setIsEyedropping(false);
+            this.mobileColorUi.setIsEyedropping(false);
+            _setActiveLeftBtn?.(activeStr);
+        };
 
         this.toolspaceToolRow = new KL.ToolspaceToolRow({
-            onActivate: (activeStr) => {
-                if (activeStr !== 'hand') {
-                    // hand only one that doesn't cause changes
-                    applyUncommitted();
-                }
-
-                if (activeStr === 'brush') {
-                    this.easel.setTool('brush');
-                } else if (activeStr === 'hand') {
-                    this.easel.setTool('hand');
-                } else if (activeStr === 'paintBucket') {
-                    this.easel.setTool('paintBucket');
-                } else if (activeStr === 'gradient') {
-                    this.easel.setTool('gradient');
-                } else if (activeStr === 'text') {
-                    this.easel.setTool('text');
-                } else if (activeStr === 'shape') {
-                    this.easel.setTool('shape');
-                } else if (activeStr === 'select') {
-                    // this.klCanvasWorkspace.setMode('shape');
-                    this.easel.setTool('select');
-                } else {
-                    throw new Error('unknown activeStr');
-                }
-                mainTabRow?.open(activeStr);
-                updateMainTabVisibility();
-                this.klColorSlider.setIsEyedropping(false);
-                this.mobileColorUi.setIsEyedropping(false);
-            },
-            onZoomIn: () => {
-                const oldScale = this.easel.getTransform().scale;
-                const newScale = zoomByStep(
-                    oldScale,
-                    keyListener.isPressed('shift') ? 1 / 8 : 1 / 2,
-                );
-                this.easel.scale(newScale / oldScale);
-            },
-            onZoomOut: () => {
-                const oldScale = this.easel.getTransform().scale;
-                const newScale = zoomByStep(
-                    oldScale,
-                    keyListener.isPressed('shift') ? -1 / 8 : -1 / 2,
-                );
-                this.easel.scale(newScale / oldScale);
-            },
-            onUndo: () => {
-                undo();
-            },
-            onRedo: () => {
-                redo();
-            },
+            onActivate: (activeStr) => activateTool(activeStr),
+            onZoomIn: doZoomIn,
+            onZoomOut: doZoomOut,
+            onUndo: () => undo(),
+            onRedo: () => redo(),
         });
         this.toolspaceToolRow.setIsSmall(this.uiHeight < 540);
-        this.toolspaceInner.append(this.toolspaceToolRow.getElement());
+        // toolspaceToolRow element not added to DOM — left bar provides tool selection UI
 
         const setBrushColor = (p_color: TRgb) => {
             currentColor = p_color;
@@ -1385,6 +1368,7 @@ export class KlApp {
             });
             this.toolspaceToolRow.setActive('brush');
             updateMainTabVisibility();
+            _setActiveLeftBtn?.('brush');
         };
 
         const setCurrentLayer = (layer: TKlCanvasLayer) => {
@@ -1410,12 +1394,13 @@ export class KlApp {
             },
         });
 
-        brushDiv.append(colorDiv);
+        // Color panel body — always visible; colorDiv holds the color slider independently of brush tool
         BB.append(colorDiv, [
             this.klColorSlider.getElement(),
             this.klColorSlider.getOutputElement(),
-            toolspaceStabilizerRow.getElement(),
         ]);
+        // stabilizer goes into brushDiv (shown only when brush tool is active)
+        brushDiv.append(toolspaceStabilizerRow.getElement());
 
         const brushTabRow = new KL.TabRow({
             initialId: 'penBrush',
@@ -1648,6 +1633,8 @@ export class KlApp {
             onCanUndoRedoChange: (canUndo, canRedo) => {
                 this.toolspaceToolRow.setEnableUndo(canUndo);
                 this.toolspaceToolRow.setEnableRedo(canRedo);
+                _leftUndoBtn?.classList.toggle('kl-left-tool-btn--disabled', !canUndo);
+                _leftRedoBtn?.classList.toggle('kl-left-tool-btn--disabled', !canRedo);
             },
         });
 
@@ -1925,12 +1912,9 @@ export class KlApp {
                     onOpen: () => {
                         if (currentBrushId === 'eraserBrush') {
                             this.klColorSlider.enable(false);
+                        } else {
+                            this.klColorSlider.enable(true);
                         }
-                        BB.append(colorDiv, [
-                            this.klColorSlider.getElement(),
-                            this.klColorSlider.getOutputElement(),
-                            toolspaceStabilizerRow.getElement(),
-                        ]);
                         brushDiv.style.display = 'block';
                     },
                     onClose: () => {
@@ -2129,11 +2113,42 @@ export class KlApp {
             ]);
             return header;
         };
-        const layersSectionHeader = makePanelHeader(LANG('layers'), this.layersUi.getElement());
+        // ---- Right dock panel helper ----
+        const makeDockPanel = (
+            title: string,
+            bodyEl: HTMLElement,
+            opts?: { grow?: boolean; startCollapsed?: boolean },
+        ): HTMLElement => {
+            const panel = BB.el({ className: 'kl-panel' + (opts?.grow ? ' kl-panel--grow' : '') });
+            let panelCollapsed = opts?.startCollapsed ?? false;
+            const panelChevron = BB.el({ content: panelCollapsed ? '▸' : '▾', className: 'kl-panel-header__chevron' });
+            const panelHeader = BB.el({
+                className: 'kl-panel-header',
+                onClick: () => {
+                    panelCollapsed = !panelCollapsed;
+                    panel.classList.toggle('kl-panel--collapsed', panelCollapsed);
+                    panelChevron.textContent = panelCollapsed ? '▸' : '▾';
+                },
+            });
+            BB.append(panelHeader, [
+                BB.el({ content: title, className: 'kl-panel-header__title' }),
+                panelChevron,
+            ]);
+            const panelBody = BB.el({ className: 'kl-panel-body' });
+            panelBody.append(bodyEl);
+            BB.append(panel, [panelHeader, panelBody]);
+            if (panelCollapsed) { panel.classList.add('kl-panel--collapsed'); }
+            return panel;
+        };
 
-        BB.append(this.toolspaceInner, [
-            this.layerPreview.getElement(),
-            mainTabRow.getElement(),
+        // Color picker at top of dock (compact, no header)
+        const colorPanelEl = BB.el({ className: 'kl-panel-body', css: { padding: '8px 10px 4px' } });
+        colorPanelEl.append(colorDiv);
+        this.toolspaceInner.append(colorPanelEl);
+
+        // Tool options panel
+        const toolOptionsPanelBody = BB.el({ className: 'kl-panel-body' });
+        BB.append(toolOptionsPanelBody, [
             brushDiv,
             handUi.getElement(),
             fillUi.getElement(),
@@ -2141,18 +2156,104 @@ export class KlApp {
             textUi.getElement(),
             shapeUi.getElement(),
             klAppSelect.getSelectUi().getElement(),
-            editUi.getElement(),
-            fileUi ? fileUi.getElement() : undefined,
-            settingsUi.getElement(),
-            layersSectionHeader,
-            this.layersUi.getElement(),
-            BB.el({
-                css: {
-                    height: '10px', // a bit of spacing at the bottom
-                },
-            }),
-            this.bottomBarWrapper ? this.bottomBarWrapper : undefined,
         ]);
+        this.toolspaceInner.append(makeDockPanel(LANG('tool-brush'), toolOptionsPanelBody));
+
+        // Layers panel
+        this.toolspaceInner.append(makeDockPanel(LANG('layers'), this.layersUi.getElement(), { grow: true }));
+
+        // Edit panel
+        this.toolspaceInner.append(makeDockPanel(LANG('tab-edit'), editUi.getElement(), { startCollapsed: true }));
+
+        // File panel (not in embed mode)
+        if (fileUi) {
+            this.toolspaceInner.append(makeDockPanel(LANG('tab-file'), fileUi.getElement(), { startCollapsed: true }));
+        }
+
+        // Settings panel
+        this.toolspaceInner.append(makeDockPanel(LANG('tab-settings'), settingsUi.getElement(), { startCollapsed: true }));
+
+        // Bottom bar
+        if (this.bottomBarWrapper) {
+            this.toolspaceInner.append(this.bottomBarWrapper);
+        }
+
+        // ---- Left bar tool buttons ----
+        const toolDefs: Array<{ id: TKlAppToolId; img: string; label: string } | 'sep'> = [
+            { id: 'brush', img: toolPaintImg, label: LANG('tool-brush') },
+            { id: 'paintBucket', img: toolFillImg, label: LANG('tool-paint-bucket') },
+            { id: 'gradient', img: toolGradientImg, label: LANG('tool-gradient') },
+            { id: 'text', img: toolTextImg, label: LANG('tool-text') },
+            { id: 'shape', img: toolShapeImg, label: LANG('tool-shape') },
+            { id: 'select', img: toolSelectImg, label: LANG('tool-select') },
+            'sep',
+            { id: 'eyedropper', img: toolPickerImg, label: LANG('eyedropper') },
+            { id: 'hand', img: toolHandImg, label: LANG('tool-hand') },
+            'sep',
+        ];
+
+        const leftBtnMap: Partial<Record<TKlAppToolId, HTMLElement>> = {};
+
+        for (const def of toolDefs) {
+            if (def === 'sep') {
+                this.leftBar.append(BB.el({ className: 'kl-left-sep' }));
+                continue;
+            }
+            const btn = BB.el({ className: 'kl-left-tool-btn', title: def.label });
+            const icon = BB.el({
+                className: 'kl-left-tool-icon dark-invert',
+                css: { backgroundImage: `url('${def.img}')` },
+            });
+            btn.append(icon);
+            btn.addEventListener('click', () => activateTool(def.id));
+            leftBtnMap[def.id] = btn;
+            this.leftBar.append(btn);
+        }
+
+        // Wire _setActiveLeftBtn
+        _setActiveLeftBtn = (id: string) => {
+            for (const [btnId, btn] of Object.entries(leftBtnMap)) {
+                btn.classList.toggle('kl-left-tool-btn--active', btnId === id);
+            }
+        };
+        _setActiveLeftBtn('brush');
+
+        // Undo / Redo / Zoom in left bar
+        this.leftBar.append(BB.el({ className: 'kl-left-sep' }));
+
+        _leftUndoBtn = BB.el({ className: 'kl-left-tool-btn kl-left-tool-btn--disabled', title: LANG('undo') });
+        _leftUndoBtn.append(BB.el({
+            className: 'kl-left-tool-icon dark-invert',
+            css: { backgroundImage: `url('${toolUndoImg}')` },
+        }));
+        _leftUndoBtn.addEventListener('click', () => undo());
+        this.leftBar.append(_leftUndoBtn);
+
+        _leftRedoBtn = BB.el({ className: 'kl-left-tool-btn kl-left-tool-btn--disabled', title: LANG('redo') });
+        _leftRedoBtn.append(BB.el({
+            className: 'kl-left-tool-icon dark-invert',
+            css: { backgroundImage: `url('${toolUndoImg}')`, transform: 'scaleX(-1)' },
+        }));
+        _leftRedoBtn.addEventListener('click', () => redo());
+        this.leftBar.append(_leftRedoBtn);
+
+        this.leftBar.append(BB.el({ className: 'kl-left-sep' }));
+
+        const leftZoomIn = BB.el({ className: 'kl-left-tool-btn', title: LANG('zoom-in') });
+        leftZoomIn.append(BB.el({
+            className: 'kl-left-tool-icon dark-invert',
+            css: { backgroundImage: `url('${toolZoomInImg}')` },
+        }));
+        leftZoomIn.addEventListener('click', () => doZoomIn());
+        this.leftBar.append(leftZoomIn);
+
+        const leftZoomOut = BB.el({ className: 'kl-left-tool-btn', title: LANG('zoom-out') });
+        leftZoomOut.append(BB.el({
+            className: 'kl-left-tool-icon dark-invert',
+            css: { backgroundImage: `url('${toolZoomOutImg}')` },
+        }));
+        leftZoomOut.addEventListener('click', () => doZoomOut());
+        this.leftBar.append(leftZoomOut);
 
         this.toolspaceScroller = new KL.ToolspaceScroller({
             toolspace: this.toolspace,

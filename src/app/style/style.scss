@@ -132,6 +132,256 @@ a:not([href]):hover {
     border-left: 1px solid rgba(0, 0, 0, 0.18);
 }
 
+// ===== NEW CSP-STYLE LAYOUT =====
+
+.kl-layout {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+
+.kl-top-bar {
+    height: vars.$topBarHeight;
+    min-height: vars.$topBarHeight;
+    flex-shrink: 0;
+    display: flex;
+    align-items: stretch;
+    background: var(--ui-bg-color);
+    border-bottom: 1px solid var(--separator-color);
+    overflow: hidden;
+    user-select: none;
+    touch-action: none;
+}
+
+.kl-workspace {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+    overflow: hidden;
+}
+
+// Vertical icon tool palette
+.kl-left-bar {
+    width: vars.$leftBarWidth;
+    min-width: vars.$leftBarWidth;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--ui-bg-color);
+    border-right: 1px solid var(--separator-color);
+    overflow-y: auto;
+    overflow-x: hidden;
+    padding: 4px 0;
+    gap: 2px;
+    user-select: none;
+    touch-action: none;
+
+    // scrollbar
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+
+    &--flip {
+        border-right: none;
+        border-left: 1px solid var(--separator-color);
+        order: 2;
+    }
+}
+
+.kl-left-tool-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background 0.1s;
+    position: relative;
+
+    .kl-left-tool-icon {
+        width: 22px;
+        height: 22px;
+        pointer-events: none;
+        opacity: 0.65;
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+    }
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.08);
+
+        .kl-left-tool-icon {
+            opacity: 0.9;
+        }
+    }
+
+    &--active {
+        background: var(--active-highlight-color);
+
+        .kl-left-tool-icon {
+            opacity: 1;
+            filter: brightness(0) invert(1);
+        }
+
+        &:hover {
+            background: var(--active-highlight-color);
+        }
+    }
+
+    &--disabled {
+        opacity: 0.3;
+        pointer-events: none;
+        cursor: default;
+    }
+}
+
+.kl-left-sep {
+    width: 26px;
+    height: 1px;
+    background: var(--separator-color);
+    margin: 3px 0;
+    flex-shrink: 0;
+}
+
+// Canvas container
+.kl-canvas-area {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    min-width: 0;
+    background: var(--body-bg-color);
+}
+
+// Right panel dock — replaces .kl-toolspace in new layout
+.kl-right-dock {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    flex-shrink: 0;
+    background: var(--ui-bg-color);
+    border-left: 1px solid var(--separator-color);
+    position: relative;
+    user-select: none;
+    touch-action: none;
+
+    &--flip {
+        border-left: none;
+        border-right: 1px solid var(--separator-color);
+        order: -1;
+    }
+}
+
+.kl-right-dock-handle {
+    position: absolute;
+    top: 0;
+    left: -3px;
+    bottom: 0;
+    width: 6px;
+    z-index: 10;
+    cursor: ew-resize;
+
+    .kl-right-dock--flip & {
+        left: auto;
+        right: -3px;
+    }
+
+    &:hover,
+    &:active {
+        background: rgba(61, 124, 245, 0.3);
+    }
+}
+
+.kl-dock-scroll {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    min-height: 0;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+}
+
+// Revised panel system for right dock
+.kl-panel {
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    border-bottom: 1px solid var(--separator-color);
+
+    &--grow {
+        flex-shrink: 1;
+        flex-grow: 1;
+        min-height: 100px;
+        overflow: hidden;
+
+        > .kl-panel-body {
+            flex: 1;
+            overflow-y: auto;
+            min-height: 0;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0, 0, 0, 0.2) transparent;
+        }
+    }
+
+    &--collapsed > .kl-panel-body {
+        display: none;
+    }
+}
+
+.kl-panel-header {
+    height: vars.$panelHeaderHeight;
+    min-height: vars.$panelHeaderHeight;
+    display: flex;
+    align-items: center;
+    padding: 0 8px 0 6px;
+    background: rgba(0, 0, 0, 0.045);
+    border-bottom: 1px solid var(--separator-color);
+    cursor: pointer;
+    flex-shrink: 0;
+    gap: 4px;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.075);
+    }
+
+    &__drag {
+        opacity: 0.3;
+        font-size: 13px;
+        line-height: 1;
+        cursor: grab;
+        padding-right: 2px;
+
+        &:hover {
+            opacity: 0.65;
+        }
+    }
+
+    &__title {
+        flex: 1;
+        font-size: 10px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: rgba(0, 0, 0, 0.5);
+    }
+
+    &__chevron {
+        font-size: 10px;
+        color: rgba(0, 0, 0, 0.4);
+        width: 14px;
+        text-align: center;
+    }
+}
+
+.kl-panel-body {
+    // base: shrinks to content height
+    overflow: hidden;
+}
+
 .kl-toolspace-resize-handle {
     position: absolute;
     top: 0;

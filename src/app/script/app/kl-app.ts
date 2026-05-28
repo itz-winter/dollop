@@ -1281,6 +1281,13 @@ export class KlApp {
         };
 
         const activateTool = (activeStr: TKlAppToolId): void => {
+            // Eyedropper is a transient "overlay" tool — no panel, no mainTabRow entry
+            if (activeStr === 'eyedropper') {
+                applyUncommitted();
+                this.easel.setTool('eyedropper');
+                _setActiveLeftBtn?.('eyedropper');
+                return;
+            }
             if (activeStr !== 'hand') {
                 applyUncommitted();
             }
@@ -1298,11 +1305,17 @@ export class KlApp {
                 this.easel.setTool('shape');
             } else if (activeStr === 'select') {
                 this.easel.setTool('select');
-            } else {
-                throw new Error('unknown activeStr');
+            } else if (activeStr === 'rotate') {
+                this.easel.setTool('rotate');
+            } else if (activeStr === 'zoom') {
+                this.easel.setTool('zoom');
             }
-            this.toolspaceToolRow.setActive(activeStr);
-            mainTabRow?.open(activeStr);
+            this.toolspaceToolRow.setActive(activeStr as any);
+            // Only open mainTabRow for tools that have a tab
+            const mainTabTools: TKlAppToolId[] = ['brush', 'hand', 'paintBucket', 'gradient', 'text', 'shape', 'select'];
+            if (mainTabTools.includes(activeStr)) {
+                mainTabRow?.open(activeStr);
+            }
             updateMainTabVisibility();
             this.klColorSlider.setIsEyedropping(false);
             this.mobileColorUi.setIsEyedropping(false);
@@ -1596,7 +1609,7 @@ export class KlApp {
         this.layerPreview = new KL.LayerPreview({
             klRootEl: this.rootEl,
             onClick: () => {
-                mainTabRow?.open('layers');
+                // Layers are always visible in the right dock — nothing to do
             },
             uiState: this.uiLayout,
             klHistory: this.klHistory,

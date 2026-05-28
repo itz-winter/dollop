@@ -150,9 +150,11 @@ a:not([href]):hover {
     align-items: stretch;
     background: var(--ui-bg-color);
     border-bottom: 1px solid var(--separator-color);
-    overflow: hidden;
     user-select: none;
     touch-action: none;
+    // NOTE: no overflow:hidden here — dropdown menus need to escape the bar
+    position: relative;
+    z-index: 100;
 }
 
 .kl-workspace {

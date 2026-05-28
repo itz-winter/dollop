@@ -13,7 +13,9 @@
     Kleki
   </a>
 </h3>
-<img width="1493" height="936" alt="image" src="https://github.com/user-attachments/assets/c05ebf9d-c991-4705-b1d2-5cbc2fc936db" />
+
+<p align="center"><img src="https://github.com/user-attachments/assets/c05ebf9d-c991-4705-b1d2-5cbc2fc936db" /></p>
+
 The name Dollop means a small amount of something. It represents the idea of a portion of features that are not part of the main project, but still have value and can be enjoyed by users.
 
 The aim of Dollop is to provide a home to the features that are proposed for Klecks but not added. This can be for various reasons, e.g. the feature is not fully developed yet, it is not polished enough, it is too niche, it is too resource intensive, it does not fit the vision of Klecks, etc.

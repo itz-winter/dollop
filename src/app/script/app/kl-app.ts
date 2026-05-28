@@ -38,7 +38,6 @@ import toolTextImg from 'url:/src/app/img/ui/tool-text.svg';
 import toolShapeImg from 'url:/src/app/img/ui/tool-shape.svg';
 import toolSelectImg from 'url:/src/app/img/ui/tool-select.svg';
 import tabSettingsImg from 'url:/src/app/img/ui/tab-settings.svg';
-import tabLayersImg from 'url:/src/app/img/ui/tab-layers.svg';
 import tabEditImg from 'url:/src/app/img/ui/tab-edit.svg';
 import { LayersUi } from '../klecks/ui/tool-tabs/layers-ui/layers-ui';
 import { TVector2D } from '../bb/bb-types';
@@ -137,7 +136,7 @@ export class KlApp {
     private readonly mobileColorUi: MobileColorUi;
     private readonly toolspace: HTMLElement;
     private readonly toolspaceInner: HTMLElement;
-    private readonly toolWidth: number = 271;
+    private toolWidth: number = 271;
     private readonly toolspaceTopRow: ToolspaceTopRow | EmbedToolspaceTopRow;
     private readonly bottomBar: HTMLElement | undefined;
     private readonly layersUi: LayersUi;
@@ -167,7 +166,7 @@ export class KlApp {
             if (this.mobileUi.getToolspaceIsOpen()) {
                 if (this.uiLayout === 'left') {
                     css(this.easel.getElement(), {
-                        left: '271px',
+                        left: this.toolWidth + 'px',
                     });
                 } else {
                     css(this.easel.getElement(), {
@@ -196,7 +195,7 @@ export class KlApp {
             this.mobileUi.setIsVisible(false);
             if (this.uiLayout === 'left') {
                 css(this.easel.getElement(), {
-                    left: '271px',
+                    left: this.toolWidth + 'px',
                 });
             }
             this.toolspace.style.display = 'block';
@@ -227,7 +226,7 @@ export class KlApp {
                 right: '',
             });
             css(this.easel.getElement(), {
-                left: '271px',
+                left: this.toolWidth + 'px',
             });
         } else {
             css(this.toolspace, {
@@ -262,6 +261,17 @@ export class KlApp {
                   ? LocalStorage.getItem('uiState')
                   : 'right'
         ) as TUiLayout;
+
+        // load persisted workspace preferences
+        {
+            const savedWidth = parseInt(LocalStorage.getItem('klecks-toolWidth') || '271');
+            this.toolWidth = BB.clamp(isNaN(savedWidth) ? 271 : savedWidth, 150, 600);
+            const savedFontSize = LocalStorage.getItem('klecks-fontSize');
+            if (savedFontSize) {
+                document.documentElement.style.fontSize = savedFontSize;
+            }
+        }
+
         const projectStore = KL_INDEXED_DB.getIsAvailable() ? new ProjectStore() : undefined;
         this.rootEl = BB.el({
             className: 'g-root',
@@ -1081,6 +1091,40 @@ export class KlApp {
         this.toolspaceInner = BB.el({
             parent: this.toolspace,
         });
+
+        // ---- resize handle ----
+        {
+            const handle = BB.el({
+                className: 'kl-toolspace-resize-handle',
+            });
+            this.toolspace.append(handle);
+            let startX = 0;
+            let startWidth = 0;
+            new BB.PointerListener({
+                target: handle,
+                onPointer: (event) => {
+                    if (event.type === 'pointerdown' && event.button === 'left') {
+                        startX = event.pageX;
+                        startWidth = this.toolWidth;
+                        event.eventStopPropagation();
+                    } else if (event.type === 'pointermove' && event.button === 'left') {
+                        event.eventStopPropagation();
+                        const dx = this.uiLayout === 'left'
+                            ? event.pageX - startX
+                            : startX - event.pageX;
+                        this.toolWidth = BB.clamp(startWidth + dx, 150, 600);
+                        this.toolspace.style.width = this.toolWidth + 'px';
+                        this.updateCollapse();
+                        if (this.uiLayout === 'left') {
+                            css(this.easel.getElement(), { left: this.toolWidth + 'px' });
+                        }
+                    } else if (event.type === 'pointerup') {
+                        LocalStorage.setItem('klecks-toolWidth', String(this.toolWidth));
+                    }
+                },
+            });
+        }
+
         this.toolspace.oncontextmenu = () => {
             return false;
         };
@@ -1991,21 +2035,6 @@ export class KlApp {
                     },
                 },
                 {
-                    id: 'layers',
-                    title: LANG('layers'),
-                    image: tabLayersImg,
-                    onOpen: () => {
-                        this.layersUi.setIsVisible(true);
-                        this.layersUi.update();
-                    },
-                    onClose: () => {
-                        this.layersUi.setIsVisible(false);
-                    },
-                    css: {
-                        minWidth: '45px',
-                    },
-                },
-                {
                     id: 'edit',
                     title: LANG('tab-edit'),
                     image: tabEditImg,
@@ -2060,8 +2089,7 @@ export class KlApp {
             ],
         });
 
-        this.bottomBarWrapper = BB.el({
-            css: {
+        this.bottomBarWrapper = BB.el({            css: {
                 width: '270px',
                 position: 'absolute',
                 bottom: '0',
@@ -2079,6 +2107,30 @@ export class KlApp {
             });
         }
 
+        // Layers panel is always visible (CSP-style) — not hidden behind a tab
+        this.layersUi.setIsVisible(true);
+        this.layersUi.update();
+
+        // Collapsible panel header factory
+        const makePanelHeader = (title: string, contentEl: HTMLElement): HTMLElement => {
+            let collapsed = false;
+            const chevron = BB.el({ content: '▾', className: 'kl-panel-header__chevron' });
+            const header = BB.el({
+                className: 'kl-panel-header',
+                onClick: () => {
+                    collapsed = !collapsed;
+                    contentEl.style.display = collapsed ? 'none' : '';
+                    chevron.textContent = collapsed ? '▸' : '▾';
+                },
+            });
+            BB.append(header, [
+                BB.el({ content: title, className: 'kl-panel-header__title' }),
+                chevron,
+            ]);
+            return header;
+        };
+        const layersSectionHeader = makePanelHeader(LANG('layers'), this.layersUi.getElement());
+
         BB.append(this.toolspaceInner, [
             this.layerPreview.getElement(),
             mainTabRow.getElement(),
@@ -2089,10 +2141,11 @@ export class KlApp {
             textUi.getElement(),
             shapeUi.getElement(),
             klAppSelect.getSelectUi().getElement(),
-            this.layersUi.getElement(),
             editUi.getElement(),
             fileUi ? fileUi.getElement() : undefined,
             settingsUi.getElement(),
+            layersSectionHeader,
+            this.layersUi.getElement(),
             BB.el({
                 css: {
                     height: '10px', // a bit of spacing at the bottom

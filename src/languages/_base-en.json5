@@ -314,6 +314,10 @@ Renaming a key across multiple language files:
     hint: "let user know they can't autosave, and there's no cloud storage. Keep short so fits on one line",
     value: 'No autosave, no cloud storage',
   },
+  "menu-file": {
+    "hint": "label for the File menu in the menu bar",
+    "value": "File"
+  },
   "file-new": {
     "hint": "action",
     "value": "New"
@@ -989,6 +993,11 @@ Renaming a key across multiple language files:
     "value": "Will update after reloading."
   },
   "settings-theme": 'Theme',
+  "settings-font-size": 'Font Size',
+  "settings-font-size-small": 'Small',
+  "settings-font-size-normal": 'Normal',
+  "settings-font-size-large": 'Large',
+  "settings-font-size-xlarge": 'X-Large',
   "settings-save-reminder-label": 'Save Reminder',
   "settings-save-reminder-disabled": 'disabled',
   "settings-save-reminder-confirm-title": 'Turn off Save Reminder?',

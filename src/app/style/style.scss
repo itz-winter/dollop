@@ -12,6 +12,16 @@
     --kl-note-2: #{vars.$klNote2};
     --kl-note-3: #{vars.$klNote3};
 
+    // Professional UI palette
+    --panel-border: #{vars.$panelBorderColor};
+    --section-header-color: #{vars.$sectionHeaderColor};
+    --section-header-bg: rgba(0, 0, 0, 0.04);
+    --btn-bg: #ebebeb;
+    --btn-bg-hover: #f8f8f8;
+    --btn-bg-active: #d8d8d8;
+    --btn-color: #333;
+    --separator-color: rgba(0, 0, 0, 0.13);
+
     --kl-checkerboard-background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2'><path d='M0,0h2v2H0z' fill='%23fff'/><path d='M0,0h1v1H0zM1,1h1v1H1z' fill='%23c8c8c8'/></svg>")
         0 0 / 8px;
 }
@@ -111,21 +121,45 @@ a:not([href]):hover {
 
 .kl-toolspace {
     background-color: var(--ui-bg-color);
+    position: relative;
 }
 
 .kl-toolspace--left {
-    border-right: 1px solid #bbb;
+    border-right: 1px solid rgba(0, 0, 0, 0.18);
 }
 
 .kl-toolspace--right {
-    border-left: 1px solid #bbb;
+    border-left: 1px solid rgba(0, 0, 0, 0.18);
+}
+
+.kl-toolspace-resize-handle {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 5px;
+    cursor: ew-resize;
+    z-index: 10;
+    transition: background 0.15s;
+
+    .kl-toolspace--left & {
+        right: -3px;
+        left: auto;
+    }
+
+    .kl-toolspace--right & {
+        left: -3px;
+        right: auto;
+    }
+
+    &:hover,
+    &:active {
+        background: rgba(61, 124, 245, 0.4);
+    }
 }
 
 .kl-toolspace-row {
-    background: linear-gradient(to top, rgba(255, 255, 255, 0) 20%, rgba(255, 255, 255, 0.6) 100%);
-    box-shadow:
-        0 1px 3px rgba(0, 0, 0, 0.1),
-        0 1px #cecece;
+    background: rgba(0, 0, 0, 0.04);
+    box-shadow: 0 1px 0 var(--separator-color);
 }
 
 .nohighlight {
@@ -152,13 +186,13 @@ a:not([href]):hover {
 }
 
 .toolspace-row-button-hover {
-    background: rgba(255, 255, 255, 0.7);
+    background: rgba(255, 255, 255, 0.55);
 }
 
 .toolspace-row-button:active,
 .toolspace-triangle-button:active {
-    background-color: #ddd;
-    box-shadow: inset 2px 2px 10px rgba(0, 0, 0, 0.2) !important;
+    background-color: rgba(0, 0, 0, 0.09);
+    box-shadow: none !important;
 }
 
 .toolspace-svg-triangle-button-hover {
@@ -171,8 +205,8 @@ a:not([href]):hover {
 }
 
 .toolspace-row-button-activated {
-    background: #fff;
-    box-shadow: inset 0 2px 0 0 var(--active-highlight-color);
+    background: rgba(255, 255, 255, 0.6);
+    box-shadow: inset 2px 0 0 var(--active-highlight-color);
     pointer-events: none;
 }
 
@@ -315,68 +349,49 @@ a:not([href]):hover {
 
 button,
 .kl-button {
-    padding: 5px;
+    padding: 5px 8px;
     min-width: 30px;
-    font-size: 15px;
-    line-height: 17px; // height of icons
-    color: #666;
+    font-size: 13px;
+    line-height: 18px;
+    color: var(--btn-color);
     border: none;
-    background-color: #f3f3f3;
-    border-radius: 4px;
+    background-color: var(--btn-bg);
+    border-radius: 3px;
     cursor: pointer;
-
-    background-image: linear-gradient(
-        to top,
-        rgba(111, 111, 111, 0.1) 0%,
-        rgba(255, 255, 255, 0) 60%,
-        rgba(255, 255, 255, 0.3) 100%
-    );
-
-    box-shadow:
-        0 0 0 1px rgba(0, 0, 0, 0.04),
-        0 1px rgba(0, 0, 0, 0.1),
-        0 2px 3px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.12);
     user-select: none;
     -webkit-user-select: none;
 }
 
 button:hover,
 .kl-button:hover {
-    background-color: #fff;
-    color: #777;
+    background-color: var(--btn-bg-hover);
+    color: #111;
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.2);
 }
 
 button:active,
 .kl-button:active {
-    background-color: #ddd;
-    box-shadow:
-        inset 2px 2px 10px rgba(0, 0, 0, 0.2),
-        0 2px 2px #ddd;
+    background-color: var(--btn-bg-active);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.18);
 }
 
 button:disabled,
 .kl-button:disabled {
-    padding: 5px;
+    padding: 5px 8px;
     min-width: 30px;
-    font-size: 15px;
-    color: #999;
+    font-size: 13px;
+    color: #aaa;
     border: none;
-    background-color: #ddd;
-    border-radius: 4px;
-
-    background-image: linear-gradient(
-        to top,
-        rgba(255, 255, 255, 0) 60%,
-        rgba(255, 255, 255, 0.3) 100%
-    );
+    background-color: #e8e8e8;
+    border-radius: 3px;
     cursor: default;
-    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.05);
+    box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.07);
 }
 
 button:disabled img,
-,
 .kl-button:disabled img {
-    opacity: 0.2;
+    opacity: 0.3;
 }
 
 button img,
@@ -408,34 +423,205 @@ button img,
 }
 
 .kl-button-delete:not(:disabled) {
-    background: linear-gradient(#f1b8b8, #f3aeae);
-    color: #423333;
+    background: #f5d5d5;
+    color: #5a2020;
+    box-shadow: 0 0 0 1px rgba(180, 0, 0, 0.2);
     &:hover {
-        background: #ffbaba;
-        color: #111;
+        background: #fcd9d9;
+        color: #3a1010;
     }
     &:active {
-        background: #f3aeae;
+        background: #ecc0c0;
         color: #000;
     }
 }
 
 .kl-button--extra-focus:focus {
-    outline: 3px solid var(--active-highlight-color);
-    outline-offset: 3px;
+    outline: 2px solid var(--active-highlight-color);
+    outline-offset: 2px;
 }
 
 .grid-button {
     width: 120px;
     margin-left: 10px;
-    margin-top: 10px;
-    min-height: 30px; // for consistency with buttons that have an icon
+    margin-top: 8px;
+    min-height: 28px;
+    font-size: 12px;
+    padding: 4px 8px;
 }
 
 .grid-button--filter {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+// ---- Panel section headers (CSP-style) ----
+.kl-panel-section {
+    padding: 0 10px 8px;
+}
+
+.kl-panel-section-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px 4px;
+    margin: 0 0 2px;
+    font-size: 10.5px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--section-header-color);
+    background: var(--section-header-bg);
+    border-top: 1px solid var(--separator-color);
+    border-bottom: 1px solid var(--separator-color);
+    user-select: none;
+}
+
+.kl-panel-section-header--first {
+    border-top: none;
+}
+
+// ---- Collapsible panel header (CSP-style panel title bars) ----
+.kl-panel-header {
+    display: flex;
+    align-items: center;
+    height: 26px;
+    padding: 0 8px 0 10px;
+    background: rgba(0, 0, 0, 0.07);
+    border-top: 1px solid var(--separator-color);
+    border-bottom: 1px solid var(--separator-color);
+    cursor: pointer;
+    user-select: none;
+    -webkit-user-select: none;
+    box-sizing: border-box;
+    width: 100%;
+
+    &:hover {
+        background: rgba(0, 0, 0, 0.11);
+    }
+
+    &:active {
+        background: rgba(0, 0, 0, 0.15);
+    }
+}
+
+.kl-panel-header__title {
+    flex: 1;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    color: #555;
+}
+
+.kl-panel-header__chevron {
+    font-size: 12px;
+    opacity: 0.5;
+    line-height: 1;
+}
+
+// ---- Menu bar button (in top row) ----
+.kl-menu-bar-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 10px;
+    font-size: 12.5px;
+    font-weight: 500;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    cursor: pointer;
+    white-space: nowrap;
+    color: #333;
+    letter-spacing: 0.01em;
+    flex-shrink: 0;
+    user-select: none;
+    -webkit-user-select: none;
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.5);
+        box-shadow: none;
+        color: #000;
+    }
+
+    &:active {
+        background: rgba(0, 0, 0, 0.08);
+        box-shadow: none;
+    }
+
+    &.kl-menu-bar-btn--open {
+        background: rgba(255, 255, 255, 0.7);
+        box-shadow: none;
+    }
+}
+
+.kl-menu-bar-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    margin-top: 2px;
+    min-width: 170px;
+    background: #e8e8e8;
+    border: 1px solid rgba(0, 0, 0, 0.18);
+    border-radius: 4px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    z-index: 1000;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.kl-menu-bar-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    padding: 6px 12px;
+    font-size: 12.5px;
+    background: none;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    text-align: left;
+    cursor: pointer;
+    color: #222;
+    white-space: nowrap;
+
+    &:hover {
+        background: var(--active-highlight-color);
+        color: #fff;
+        box-shadow: none;
+    }
+
+    &:active {
+        background: rgba(0, 0, 0, 0.1);
+        color: #000;
+        box-shadow: none;
+    }
+
+    &:disabled {
+        color: #aaa;
+        background: none;
+        cursor: default;
+        box-shadow: none;
+    }
+}
+
+.kl-menu-bar-shortcut {
+    font-size: 11px;
+    opacity: 0.55;
+    margin-left: auto;
+}
+
+.kl-menu-bar-separator {
+    height: 1px;
+    background: var(--separator-color);
+    margin: 3px 0;
 }
 
 .kl-popup {
@@ -452,11 +638,11 @@ button img,
 
 .kl-popup-box {
     position: relative;
-    background-color: #ddd;
-    border-radius: 10px;
+    background-color: #e2e2e2;
+    border-radius: 6px;
     padding: 20px;
     margin: 10px 0;
-    box-shadow: rgba(0, 0, 0, 0.45) 0 5px 60px;
+    box-shadow: 0 8px 40px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(0, 0, 0, 0.12);
 }
 
 .kl-popup-box--sm {
@@ -587,34 +773,30 @@ button img,
 
 .kl-layer {
     width: 270px;
-    height: 36px;
-    // padding-left: 25px;
-    background-color: rgb(220, 220, 220);
-    border: 1px solid rgb(158, 158, 158);
+    height: 44px;
+    background-color: rgba(0, 0, 0, 0.03);
+    border: none;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
     position: absolute;
     left: 0;
-    transition: all 0.1s linear;
-    // border-radius: 5px;
+    transition: background 0.08s linear, box-shadow 0.08s linear;
     box-sizing: border-box;
-    background-image: linear-gradient(
-        to top,
-        rgba(188, 188, 188, 0.1) 0%,
-        rgba(255, 255, 255, 0.3) 100%
-    );
 
     .kl-layer__label,
     .kl-layer__opacity-label {
-        color: #666;
+        color: #444;
     }
 }
 
 .kl-layer--selected {
     background: #fff;
-    border: 1px solid var(--active-highlight-color);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: inset 2px 0 0 var(--active-highlight-color);
     z-index: 1;
 
     .kl-layer__label {
-        color: #000;
+        color: #111;
+        font-weight: 600;
     }
 }
 
@@ -693,8 +875,8 @@ iframe {
 }
 
 .tabrow {
-    background: linear-gradient(to top, rgb(208, 208, 208) 0%, rgba(208, 208, 208, 0) 80%);
-    border-bottom: 1px solid rgba(255, 255, 255, 0.7);
+    background: rgba(0, 0, 0, 0.06);
+    border-bottom: 1px solid var(--separator-color);
     display: flex;
     position: relative;
     z-index: 0;
@@ -707,9 +889,13 @@ iframe {
     flex-grow: 1;
     height: 100%;
     text-align: center;
-    opacity: 0.6;
-    border-top-left-radius: 5px;
-    border-top-right-radius: 5px;
+    opacity: 0.55;
+    border-top-left-radius: 3px;
+    border-top-right-radius: 3px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
 
     background-repeat: no-repeat;
     background-position: center;
@@ -717,16 +903,17 @@ iframe {
     z-index: 0;
 }
 .tabrow__tab-hover {
-    background-color: #fff;
+    background-color: rgba(255, 255, 255, 0.5);
+    opacity: 0.75;
 }
 
 .tabrow__tab:active:not(.tabrow__tab--opened-accented, .tabrow__tab--opened) {
-    box-shadow: inset 0 1px #0000004d;
+    box-shadow: inset 0 1px rgba(0, 0, 0, 0.15);
 }
 
 .tabrow__tab--opened,
 .tabrow__tab--opened-accented {
-    background-color: #f5f5f5;
+    background-color: var(--ui-bg-color);
     opacity: 1;
     cursor: default;
     position: relative;
@@ -761,14 +948,13 @@ clip-path seems the cleanest.
     bottom: 0;
     width: 11px;
     height: 10px;
-    background: #f5f5f5;
-    // webstorm complains for no reason https://youtrack.jetbrains.com/issue/WEB-56824/Mismatched-property-value-error-for-clip-path-path...
+    background: var(--ui-bg-color);
     // noinspection CssInvalidPropertyValue
     clip-path: path('M 11 10 11 0 10 0 A 10 10 0 0 1 0 10');
     filter: none !important;
 
     animation-name: fadeInRounding;
-    animation-duration: 0.4s;
+    animation-duration: 0.25s;
     animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
     transform-origin: 10px 10px;
 }
@@ -780,13 +966,13 @@ clip-path seems the cleanest.
     bottom: 0;
     width: 11px;
     height: 10px;
-    background: #f5f5f5;
+    background: var(--ui-bg-color);
     // noinspection CssInvalidPropertyValue
     clip-path: path('M 0 0 0 10 11 10 A 10 10 0 0 1 1 0');
     filter: none !important;
 
     animation-name: fadeInRounding;
-    animation-duration: 0.4s;
+    animation-duration: 0.25s;
     animation-timing-function: cubic-bezier(0.25, 1, 0.5, 1);
     transform-origin: 1px 10px;
 }
@@ -1229,8 +1415,9 @@ clip-path seems the cleanest.
     margin-top: 1px;
     overflow: hidden;
 
-    background: #ddd;
-    box-shadow: 0 2px 5px #00000080;
+    background: #e6e6e6;
+    border: 1px solid rgba(0, 0, 0, 0.16);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
     border-radius: 4px;
 
     display: flex;
@@ -1239,6 +1426,9 @@ clip-path seems the cleanest.
 
     button {
         text-align: left;
+        border-radius: 0;
+        box-shadow: none;
+        font-size: 12.5px;
     }
 }
 

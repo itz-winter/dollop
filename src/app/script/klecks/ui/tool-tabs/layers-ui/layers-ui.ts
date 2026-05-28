@@ -93,7 +93,7 @@ export class LayersUi {
     private largeThumbTimeout: undefined | ReturnType<typeof setTimeout>;
     private lastpos: number = 0;
 
-    private readonly layerHeight: number = 35;
+    private readonly layerHeight: number = 44;
     private readonly layerSpacing: number = 0;
 
     private move(oldSpotIndex: number, newSpotIndex: number): void {
@@ -213,7 +213,7 @@ export class LayersUi {
     }
 
     private updateHeight(): void {
-        this.layerListEl.style.height = this.layerElArr.length * 35 + 'px';
+        this.layerListEl.style.height = this.layerElArr.length * this.layerHeight + 'px';
     }
 
     private createLayerList(force?: boolean): void {
@@ -237,7 +237,7 @@ export class LayersUi {
                 className: 'kl-layer',
             }) as HTMLElement as TLayerEl;
             this.layerElArr[index] = layer;
-            layer.posY = (this.klCanvasLayerArr.length - 1) * 35 - index * 35;
+            layer.posY = (this.klCanvasLayerArr.length - 1) * this.layerHeight - index * this.layerHeight;
             css(layer, {
                 top: layer.posY + 'px',
             });
@@ -256,7 +256,7 @@ export class LayersUi {
             const container1 = BB.el();
             css(container1, {
                 width: '270px',
-                height: '34px',
+                height: '43px',
             });
             const container2 = BB.el();
             layer.append(innerLayer);
@@ -318,8 +318,8 @@ export class LayersUi {
                 const thumbDimensions = BB.fitInto(
                     layercanvas.width,
                     layercanvas.height,
-                    30,
-                    30,
+                    36,
+                    36,
                     1,
                 );
                 layer.thumb = BB.canvas(thumbDimensions.width, thumbDimensions.height);
@@ -333,8 +333,8 @@ export class LayersUi {
                 thc.restore();
                 css(layer.thumb, {
                     position: 'absolute',
-                    left: (32 - layer.thumb.width) / 2 + paddingLeft + 'px',
-                    top: (32 - layer.thumb.height) / 2 + 1 + 'px',
+                    left: (36 - layer.thumb.width) / 2 + paddingLeft + 'px',
+                    top: (40 - layer.thumb.height) / 2 + 1 + 'px',
                     background: 'var(--kl-checkerboard-background)',
                 });
             }
@@ -358,11 +358,12 @@ export class LayersUi {
 
                 css(layer.label, {
                     position: 'absolute',
-                    left: 1 + 32 + 5 + paddingLeft + 'px',
-                    top: 1 + 'px',
-                    fontSize: '13px',
-                    width: '165px',
-                    height: '20px',
+                    left: paddingLeft + 36 + 6 + 'px',
+                    top: '5px',
+                    fontSize: '12.5px',
+                    fontWeight: '500',
+                    width: '155px',
+                    height: '18px',
                     overflow: 'hidden',
                     whiteSpace: 'nowrap',
                     textOverflow: 'ellipsis',
@@ -389,11 +390,12 @@ export class LayersUi {
 
                 css(layer.opacityLabel, {
                     position: 'absolute',
-                    left: 250 - 1 - 5 - 50 - 5 + paddingLeft + 'px',
-                    top: 1 + 'px',
-                    fontSize: '13px',
+                    right: '6px',
+                    top: '5px',
+                    fontSize: '11px',
                     textAlign: 'right',
-                    width: '50px',
+                    width: '40px',
+                    opacity: '0.7',
                     transition: 'color 0.2s ease-in-out',
                     textDecoration: isVisible ? undefined : 'line-through',
                 });
@@ -430,8 +432,9 @@ export class LayersUi {
             });
             css(opacitySlider.getElement(), {
                 position: 'absolute',
-                left: 39 + paddingLeft + 'px',
-                top: '17px',
+                left: paddingLeft + 36 + 6 + 'px',
+                top: '24px',
+                width: '140px',
             });
             layer.opacitySlider = opacitySlider;
 
@@ -696,7 +699,7 @@ export class LayersUi {
         this.onChangeBackgroundColor = p.onChangeBackgroundColor;
 
         this.layerElArr = [];
-        this.layerHeight = 35;
+        this.layerHeight = 44;
         this.layerSpacing = 0;
         const width = 270;
 
@@ -918,9 +921,25 @@ export class LayersUi {
         let modeWrapper;
         {
             modeWrapper = BB.el({
-                content: LANG('layers-blending') + '&nbsp;',
                 css: {
-                    fontSize: '15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 0 4px',
+                    borderBottom: '1px solid rgba(0,0,0,0.1)',
+                    marginBottom: '0',
+                },
+            });
+
+            const modeLabel = BB.el({
+                content: LANG('layers-blending'),
+                css: {
+                    fontSize: '11px',
+                    fontWeight: '600',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    color: '#777',
+                    flexShrink: '0',
                 },
             });
 
@@ -955,12 +974,12 @@ export class LayersUi {
                     this.update(this.selectedSpotIndex);
                 },
                 css: {
-                    marginBottom: '10px',
+                    marginBottom: '0',
                 },
                 name: 'layer-blend-mode',
             });
 
-            modeWrapper.append(this.modeSelect.getElement());
+            modeWrapper.append(modeLabel, this.modeSelect.getElement());
             this.rootEl.append(modeWrapper);
         }
 

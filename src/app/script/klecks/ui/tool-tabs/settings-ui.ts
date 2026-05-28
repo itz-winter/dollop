@@ -136,6 +136,31 @@ export class SettingsUi {
             },
         });
 
+        // ---- font size ----
+        {
+            const fontSizeSelect = new KL.Select({
+                optionArr: [
+                    ['13px', LANG('settings-font-size-small')],
+                    ['15px', LANG('settings-font-size-normal')],
+                    ['17px', LANG('settings-font-size-large')],
+                    ['19px', LANG('settings-font-size-xlarge')],
+                ],
+                initValue: (LocalStorage.getItem('klecks-fontSize') as '13px' | '15px' | '17px' | '19px' | null) ?? '15px',
+                onChange: (val) => {
+                    document.documentElement.style.fontSize = val;
+                    LocalStorage.setItem('klecks-fontSize', val);
+                },
+                name: 'ui-font-size',
+            });
+            fontSizeSelect.getElement().style.flexGrow = '1';
+            this.rootEl.append(
+                c(',flex,items-center,gap-5,mt-15,flexWrap', [
+                    LANG('settings-font-size') + ':',
+                    fontSizeSelect.getElement(),
+                ]),
+            );
+        }
+
         // ---- save reminder ----
         if (saveReminder) {
             const reminderSelect = new KL.Select({

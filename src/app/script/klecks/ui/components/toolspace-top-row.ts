@@ -1,19 +1,14 @@
 import { BB } from '../../../bb/bb';
 import klecksLogoImg from 'url:/src/app/img/klecks-logo.png';
-import newImageImg from 'url:/src/app/img/ui/new-image.svg';
-import importImg from 'url:/src/app/img/ui/import.svg';
-import exportImg from 'url:/src/app/img/ui/export.svg';
-import shareImg from 'url:/src/app/img/ui/share.svg';
-import helpImg from 'url:/src/app/img/ui/help.svg';
 import { LANG } from '../../../language/language';
-import { PointerListener } from '../../../bb/input/pointer-listener';
 import { css } from '../../../bb/base/base';
 
 /**
- * Topmost row of buttons in toolspace (with the app logo)
+ * Topmost row of the toolspace: logo + professional menu bar (File, Help).
  */
 export class ToolspaceTopRow {
     private readonly rootEl: HTMLElement;
+    private logoImEl: HTMLElement | null = null;
 
     // ----------------------------------- public -----------------------------------
     constructor(p: {
@@ -30,123 +25,144 @@ export class ToolspaceTopRow {
             css: {
                 height: '36px',
                 display: 'flex',
+                alignItems: 'stretch',
             },
         });
 
-        function createButton(p: {
-            onClick: () => void;
-            title: string;
-            image: string;
-            contain: boolean;
-            extraPadding?: number;
-            darkInvert?: boolean;
-        }): {
-            el: HTMLElement;
-            pointerListener: PointerListener;
-        } {
-            const padding = 6 + (p.extraPadding ? p.extraPadding : 0);
-            const el = BB.el({
-                className: 'toolspace-row-button nohighlight',
-                title: p.title,
-                onClick: p.onClick,
-                css: {
-                    padding: p.contain ? padding + 'px 0' : '',
-                },
-            });
-            const im = BB.el({
-                className: p.darkInvert ? 'dark-invert' : undefined,
-                id: 'kl-logo-button-im',
-                css: {
-                    backgroundImage: "url('" + p.image + "')",
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center',
-                    backgroundSize: p.contain ? 'contain' : '',
-                    //filter: 'grayscale(1)',
-                    height: '100%',
-                },
-            });
-            im.style.pointerEvents = 'none';
-            el.append(im);
-            const pointerListener = new BB.PointerListener({
-                // because :hover causes problems w touch
-                target: el,
-                onEnterLeave: function (isOver) {
-                    el.classList.toggle('toolspace-row-button-hover', isOver);
-                },
-            });
-            return {
-                el,
-                pointerListener,
-            };
-        }
+        // --- Logo button ---
+        const logoIm = BB.el({
+            className: 'dark-invert',
+            css: {
+                backgroundImage: "url('" + (p.logoImg ? p.logoImg : klecksLogoImg) + "')",
+                backgroundRepeat: 'no-repeat',
+                backgroundPosition: 'center',
+                backgroundSize: 'contain',
+                width: '100%',
+                height: '100%',
+                pointerEvents: 'none',
+            },
+        });
+        this.logoImEl = logoIm;
 
-        const logoButton = createButton({
-            onClick: p.onLogo,
+        const logoBtn = BB.el({
+            className: 'toolspace-row-button nohighlight kl-tool-row-border-right',
             title: LANG('home'),
-            image: p.logoImg ? p.logoImg : klecksLogoImg,
-            contain: true,
-            darkInvert: true,
+            onClick: p.onLogo,
+            css: { width: '44px', padding: '6px 0' },
         });
-        logoButton.el.classList.add('kl-tool-row-border-right');
-        css(logoButton.el, {
-            width: '46px',
-        });
-        const newButton = createButton({
-            onClick: p.onNew,
-            title: LANG('file-new'),
-            image: newImageImg,
-            extraPadding: 1,
-            contain: true,
-        });
-        const importButton = createButton({
-            onClick: p.onImport,
-            title: LANG('file-import'),
-            image: importImg,
-            extraPadding: 1,
-            contain: true,
-        });
-        const saveButton = createButton({
-            onClick: p.onSave,
-            title: LANG('file-save'),
-            image: exportImg,
-            extraPadding: 1,
-            contain: true,
+        logoBtn.append(logoIm);
+        new BB.PointerListener({
+            target: logoBtn,
+            onEnterLeave: (isOver) => logoBtn.classList.toggle('toolspace-row-button-hover', isOver),
         });
 
-        let shareButton = null;
-        if (BB.canShareFiles()) {
-            shareButton = createButton({
-                onClick: p.onShare,
-                title: LANG('file-share'),
-                image: shareImg,
-                contain: true,
-                darkInvert: true,
-            });
+        // --- Menu bar helper ---
+        let activeDropdown: HTMLElement | null = null;
+        let activeBtn: HTMLElement | null = null;
+
+        function closeActiveDropdown() {
+            if (activeDropdown) {
+                activeDropdown.style.display = 'none';
+                activeDropdown = null;
+            }
+            if (activeBtn) {
+                activeBtn.classList.remove('kl-menu-bar-btn--open');
+                activeBtn = null;
+            }
         }
-        const helpButton = createButton({
-            onClick: p.onHelp,
-            title: LANG('help'),
-            image: helpImg,
-            contain: true,
-            darkInvert: true,
-        });
 
-        BB.append(this.rootEl, [
-            logoButton.el,
-            newButton.el,
-            importButton.el,
-            saveButton.el,
-            shareButton ? shareButton.el : undefined,
-            helpButton.el,
+        document.addEventListener('mousedown', (e) => {
+            if (activeDropdown && !activeDropdown.contains(e.target as Node) &&
+                activeBtn && !activeBtn.contains(e.target as Node)) {
+                closeActiveDropdown();
+            }
+        }, true);
+
+        function createMenuBarBtn(label: string, items: {
+            label: string;
+            shortcut?: string;
+            onClick?: () => void;
+            separator?: boolean;
+            hidden?: boolean;
+        }[]): HTMLElement {
+            const wrapper = BB.el({ css: { position: 'relative', display: 'flex', alignItems: 'stretch' } });
+
+            const btn = BB.el({
+                tagName: 'button',
+                className: 'kl-menu-bar-btn',
+                content: label,
+            });
+
+            const dropdown = BB.el({
+                className: 'kl-menu-bar-dropdown',
+                css: { display: 'none' },
+            });
+
+            items.forEach((item) => {
+                if (item.hidden) return;
+                if (item.separator) {
+                    dropdown.append(BB.el({ className: 'kl-menu-bar-separator' }));
+                    return;
+                }
+                const row = BB.el({
+                    tagName: 'button',
+                    className: 'kl-menu-bar-item',
+                    onClick: () => {
+                        closeActiveDropdown();
+                        item.onClick && item.onClick();
+                    },
+                });
+                row.append(BB.el({ content: item.label, css: { flex: '1' } }));
+                if (item.shortcut) {
+                    row.append(BB.el({ className: 'kl-menu-bar-shortcut', content: item.shortcut }));
+                }
+                dropdown.append(row);
+            });
+
+            btn.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                if (activeDropdown === dropdown) {
+                    closeActiveDropdown();
+                    return;
+                }
+                closeActiveDropdown();
+                activeDropdown = dropdown;
+                activeBtn = btn;
+                btn.classList.add('kl-menu-bar-btn--open');
+                dropdown.style.display = 'block';
+            });
+
+            wrapper.append(btn, dropdown);
+            return wrapper;
+        }
+
+        // --- File menu ---
+        const fileItems = [
+            { label: LANG('file-new'), shortcut: 'Ctrl+N', onClick: p.onNew },
+            { label: LANG('file-import'), shortcut: 'Ctrl+O', onClick: p.onImport },
+            { separator: true, label: '' },
+            { label: LANG('file-save'), shortcut: 'Ctrl+S', onClick: p.onSave },
+            ...(BB.canShareFiles() ? [
+                { separator: true, label: '' },
+                { label: LANG('file-share'), onClick: p.onShare },
+            ] : []),
+        ];
+        const fileMenu = createMenuBarBtn(LANG('menu-file'), fileItems);
+
+        // --- Help menu ---
+        const helpMenu = createMenuBarBtn(LANG('help'), [
+            { label: LANG('help'), onClick: p.onHelp },
         ]);
+        css(helpMenu, { marginLeft: 'auto' });
+
+        BB.append(this.rootEl, [logoBtn, fileMenu, helpMenu]);
     }
 
     setLogo(logoImg: string, isPixelated?: boolean, keepOriginalColors?: boolean): void {
-        const el = document.getElementById('kl-logo-button-im');
-        if (el) {
-            el.style.backgroundImage = "url('" + logoImg + "')";
-            el.style.imageRendering = isPixelated ? 'pixelated' : '';
-            el.classList.toggle('dark-invert', !keepOriginalColors);
+        if (this.logoImEl) {
+            this.logoImEl.style.backgroundImage = "url('" + logoImg + "')";
+            this.logoImEl.style.imageRendering = isPixelated ? 'pixelated' : '';
+            this.logoImEl.classList.toggle('dark-invert', !keepOriginalColors);
         }
     }
 

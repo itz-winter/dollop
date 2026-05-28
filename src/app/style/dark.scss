@@ -2,52 +2,67 @@
 :root.kl-theme-dark {
     color-scheme: dark;
 
-    --ui-bg-dark: #333;
-    --kl-checkerboard-background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2'><path d='M0,0h2v2H0z' fill='%235a5a5a'/><path d='M0,0h1v1H0zM1,1h1v1H1z' fill='%233f3f3f'/></svg>")
+    --ui-bg-dark: #303030;
+    --ui-bg-dark-2: #3a3a3a;
+    --kl-checkerboard-background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 2 2'><path d='M0,0h2v2H0z' fill='%235a5a5a'/><path d='M0,0h1v1H0zM1,1h1v1H1z' fill='%233a3a3a'/></svg>")
         0 0 / 8px;
 
+    --btn-bg: #484848;
+    --btn-bg-hover: #555;
+    --btn-bg-active: #3e3e3e;
+    --btn-color: #ccc;
+    --separator-color: rgba(255, 255, 255, 0.1);
+    --section-header-color: #999;
+    --section-header-bg: rgba(0, 0, 0, 0.25);
+    --panel-border: rgba(255, 255, 255, 0.08);
+    --ui-bg-color: var(--ui-bg-dark);
+
     color: #ccc;
-    background: rgb(33, 33, 33);
+    background: #1e1e1e;
 
     .kl-toolspace {
         background: var(--ui-bg-dark);
     }
 
     .kl-toolspace--left {
-        border-right: 1px solid #626262;
+        border-right: 1px solid #1e1e1e;
     }
 
     .kl-toolspace--right {
-        border-left: 1px solid #626262;
+        border-left: 1px solid #1e1e1e;
+    }
+
+    .kl-toolspace-resize-handle {
+        &:hover,
+        &:active {
+            background: rgba(100, 160, 255, 0.35);
+        }
     }
 
     .kl-toolspace-row {
-        background: linear-gradient(
-            to top,
-            rgba(255, 255, 255, 0) 20%,
-            rgba(255, 255, 255, 0.1) 100%
-        );
-        box-shadow: 0 1px 1px #252525;
+        background: rgba(0, 0, 0, 0.2);
+        box-shadow: 0 1px 0 rgba(0, 0, 0, 0.4);
     }
 
     .toolspace-row-button-activated {
-        background: #6e6e6e;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: inset 2px 0 0 var(--active-highlight-color);
     }
 
     .toolspace-row-button-hover {
-        background: #535353;
+        background: rgba(255, 255, 255, 0.1);
     }
 
     .toolspace-row-button:active {
-        background: #585858;
+        background: rgba(255, 255, 255, 0.06);
     }
 
     .toolspace-svg-triangle-button-hover {
-        fill: #535353;
+        fill: rgba(255, 255, 255, 0.12);
     }
 
     .toolspace-svg-triangle-button:active {
-        fill: #585858;
+        fill: rgba(255, 255, 255, 0.06);
     }
 
     .toolspace-row-button__submit:hover {
@@ -55,92 +70,93 @@
     }
 
     .tabrow {
-        background: linear-gradient(0deg, rgb(44, 44, 44) 0%, rgba(44, 44, 44, 0) 90%);
-        border-bottom: 1px solid #6e6e6e;
+        background: rgba(0, 0, 0, 0.2);
+        border-bottom: 1px solid rgba(0, 0, 0, 0.4);
     }
 
     .tabrow__tab {
-        color: #fff;
+        color: #ddd;
     }
 
     .tabrow__tab--opened,
     .tabrow__tab--opened-accented {
-        background-color: #6e6e6e;
+        background-color: var(--ui-bg-dark);
     }
 
     .tabrow__tab div {
-        filter: brightness(0.45);
+        filter: brightness(0.5);
     }
 
     .tabrow__tab:not(.tabrow__tab--opened, .tabrow__tab--opened-accented):hover {
-        background-color: #535353;
+        background-color: rgba(255, 255, 255, 0.08);
+        opacity: 0.8;
     }
 
     .tabrow__tab:active:not(.tabrow__tab--opened-accented, .tabrow__tab--opened) {
-        box-shadow: inset 0 1px #999;
+        box-shadow: inset 0 1px rgba(255, 255, 255, 0.2);
     }
 
     .tabrow__tab__rounding-left {
-        background: #6e6e6e;
+        background: var(--ui-bg-dark);
     }
 
     .tabrow__tab__rounding-right {
-        background: #6e6e6e;
+        background: var(--ui-bg-dark);
     }
 
     .kl-tool-row-border-right {
-        border-right: 1px solid rgb(48, 48, 48);
+        border-right: 1px solid rgba(0, 0, 0, 0.4);
     }
 
     .tool-dropdown-wrapper {
-        background-color: #5e5e5e;
+        background-color: #4a4a4a;
     }
 
     .tool-dropdown-button:hover {
-        background: #808080;
+        background: #666;
     }
 
     .tool-dropdown-button:active {
-        background: #585858;
+        background: #444;
     }
 
     .kl-tooldropdown-caret {
-        background-color: #4a4a4a;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        background-color: #3e3e3e;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
     }
 
     .toolspace-row-button-activated > .kl-tooldropdown-caret {
-        background-color: #585858;
+        background-color: #505050;
     }
 
     .toolspace-row-button-activated.kl-tool-button--hover > .kl-tooldropdown-caret {
-        background-color: #666;
+        background-color: #5a5a5a;
     }
 
     .kl-tooldropdown-caret:hover {
-        background-color: #666;
+        background-color: #5a5a5a;
     }
 
     .kl-popup {
-        background: #212121a1;
+        background: rgba(0, 0, 0, 0.65);
     }
 
     .kl-popup-box {
         background-color: var(--ui-bg-dark);
-        box-shadow: 0 0 0 1px #636363;
+        box-shadow: 0 8px 40px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     .kl-d-modal-root {
-        background: #212121a1;
+        background: rgba(0, 0, 0, 0.65);
     }
 
     .kl-d-modal {
         background-color: var(--ui-bg-dark);
-        box-shadow: 0 0 0 1px #636363;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
     .kl-button-link {
-        color: #ccc !important;
+        color: #bbb !important;
         &:hover {
             color: #eee !important;
         }
@@ -151,32 +167,30 @@
 
     button,
     .kl-button {
-        color: #ccc;
-        background-color: #4a4a4a;
-        background-image: none;
-        box-shadow: none;
-        user-select: none;
+        color: var(--btn-color);
+        background-color: var(--btn-bg);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
     }
 
     button:hover,
     .kl-button:hover {
-        background-color: #555;
+        background-color: var(--btn-bg-hover);
         color: #eee;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
     }
 
     button:active,
     .kl-button:active {
-        background-color: #555;
+        background-color: var(--btn-bg-active);
         color: #fff;
-        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.12);
     }
 
     button:disabled,
     .kl-button:disabled {
-        color: #999;
-        background-color: transparent;
-        background-image: none;
-        box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.1);
+        color: #666;
+        background-color: #3a3a3a;
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
         pointer-events: none;
     }
 
@@ -185,25 +199,25 @@
         color: #fff;
 
         &:hover {
-            background-image: linear-gradient(
-                to top,
-                var(--kl-color) -50%,
-                var(--active-highlight-color) 150%
-            );
+            background: #4a7ef8;
+        }
+
+        &:active {
+            background: #2455d8;
         }
     }
 
     .kl-button-delete:not(:disabled) {
-        background: #b84949;
-        color: #ffd2d2;
+        background: #6a2020;
+        color: #ffcfcf;
+        box-shadow: 0 0 0 1px rgba(200, 0, 0, 0.3);
         &:hover {
-            background: #d86363;
+            background: #8a3030;
             color: #fff;
         }
         &:active {
-            background: #b84949;
+            background: #5a1818;
             color: #fff;
-            box-shadow: 0 0 0 1px #d86363;
         }
     }
 
@@ -214,24 +228,26 @@
 
     input,
     textarea {
-        background: #333;
+        background: #282828;
         color: #ccc;
+        border-color: #555;
     }
 
     input:focus,
     textarea:focus {
-        background: #222;
+        background: #202020;
         color: #fff;
+        border-color: #888;
     }
 
     .kl-select {
-        background: #222;
-        color: #fff;
-        border: 2px solid #666;
+        background: #282828;
+        color: #ccc;
+        border: 1px solid #555;
     }
 
     .kl-checkbox__inner {
-        color: #ccc;
+        color: #bbb;
 
         &:hover {
             color: #fff;
@@ -245,42 +261,42 @@
 
     .kl-option {
         background: var(--ui-bg-dark);
-        color: #ccc;
-        box-shadow: inset 0 0 0 1px #606060;
+        color: #bbb;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 
         &:not(.kl-option-selected):hover {
-            background: #444;
+            background: #404040;
         }
 
         &:not(.kl-option-selected):active {
-            box-shadow: inset 0 0 0 2px #666;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
         }
     }
 
     .kl-option-selected {
-        background: #606060;
+        background: #505050;
         color: #fff;
         box-shadow: inset 0 0 0 2px var(--active-highlight-color);
     }
 
     .kl-box-toggle {
         background: var(--ui-bg-dark);
-        color: #ccc;
-        box-shadow: inset 0 0 0 1px #606060;
+        color: #bbb;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
 
         &:not(.kl-box-toggle--active) {
             &:hover {
-                background: #444;
+                background: #404040;
             }
             &:active {
-                box-shadow: inset 0 0 0 2px #666;
+                box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.25);
             }
         }
     }
 
     .kl-box-toggle--active {
         color: #fff;
-        background: #606060;
+        background: #505050;
         box-shadow: inset 0 0 0 2px var(--active-highlight-color);
     }
 
@@ -290,34 +306,34 @@
 
     .kl-file-no-autosave {
         background: transparent;
-        color: #c9b184;
-        box-shadow: inset 0 0 0 1px;
+        color: #c9b070;
+        box-shadow: inset 0 0 0 1px #c9b070;
     }
 
     .slider-wrapper {
         background: #222;
-        box-shadow: 0 0 0 1px #777;
+        box-shadow: 0 0 0 1px #666;
         color: #ddd;
         text-shadow: none;
 
         .slider-inner {
-            background: #555;
-            box-shadow: 1px 0 0 #777;
+            background: #505050;
+            box-shadow: 1px 0 0 #666;
         }
     }
 
     .slider-wrapper--active {
-        box-shadow: 0 0 0 1px #aaa;
+        box-shadow: 0 0 0 1px #999;
         color: #fff;
 
         .slider-inner {
-            box-shadow: 1px 0 0 #aaa;
+            box-shadow: 1px 0 0 #999;
         }
     }
 
     .slider-wrapper--disabled {
         box-shadow: none;
-        color: #999;
+        color: #666;
     }
 
     .info-hint {
@@ -333,28 +349,26 @@
             color: #ccc;
             border-bottom: none;
             &:hover {
-                background: #444;
+                background: #404040;
             }
         }
 
         .kl-2-tabs__left {
-            border-top-left-radius: 10px;
             border-right: none;
         }
 
         .kl-2-tabs__right {
-            border-top-right-radius: 10px;
             border-left: none;
         }
 
         .kl-2-tabs--active {
             color: #fff;
-            background: #444;
+            background: #404040;
             border: 1px solid var(--active-highlight-color);
             border-bottom: none;
 
             &:hover {
-                background: #fff;
+                background: #444;
             }
         }
     }
@@ -368,49 +382,49 @@
     }
 
     .kl-preview-wrapper {
-        background: rgb(33, 33, 33);
+        background: #1e1e1e;
         box-shadow:
-            inset 0 1px #636363,
-            inset 0 -1px #636363;
+            inset 0 1px #555,
+            inset 0 -1px #555;
 
         .kl-preview-wrapper__canvas {
-            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2);
         }
     }
 
     .kl-edit-crop-preview {
-        border-top: 1px solid #636363;
-        border-bottom: 1px solid #636363;
+        border-top: 1px solid #555;
+        border-bottom: 1px solid #555;
     }
 
     .kl-transparent-preview {
         box-shadow:
-            inset 0 1px #636363,
-            inset 0 -1px #636363;
+            inset 0 1px #555,
+            inset 0 -1px #555;
 
         .kl-transparent-preview__canvas {
-            box-shadow: 0 0 0 1px #777;
+            box-shadow: 0 0 0 1px #666;
         }
     }
 
     .kl-merge-preview {
-        box-shadow: 0 0 0 1px #636363;
+        box-shadow: 0 0 0 1px #555;
     }
 
     a:link,
     a:not([href]),
     a:visited {
-        color: #64acff;
+        color: #6ab4ff;
 
         &:hover {
-            color: #b2e8ff;
+            color: #b2d8ff;
         }
     }
 
     .kl-color-picker__h,
     .kl-color-picker__sv,
     .kl-color-picker__preview {
-        box-shadow: 0 0 0 1px rgb(100, 100, 100);
+        box-shadow: 0 0 0 1px #666;
     }
 
     .kl-color-picker--active {
@@ -418,11 +432,11 @@
     }
 
     .kl-color-picker__secondary {
-        box-shadow: 0 0 0 1px #7a7a7a;
+        box-shadow: 0 0 0 1px #666;
     }
 
     .kl-stabilizer {
-        color: #ccc;
+        color: #bbb;
     }
 
     .brush-alpha,
@@ -431,9 +445,9 @@
     }
 
     .kl-layer-preview {
-        color: #ccc;
+        color: #bbb;
         canvas {
-            box-shadow: 0 0 0 1px #7a7a7a;
+            box-shadow: 0 0 0 1px #666;
         }
     }
 
@@ -441,7 +455,7 @@
     .kl-toolspace-note {
         background: unset;
         color: var(--kl-note-1);
-        border: 1px solid var(--kl-note-1);
+        border: 1px solid rgba(255, 220, 0, 0.4);
     }
 
     .kl-curves-graph {
@@ -457,85 +471,88 @@
     }
 
     .kl-storage-preview {
-        background: #212121;
-        box-shadow: 0 0 0 1px #5e5e5e;
-        color: #aaa;
+        background: #1e1e1e;
+        box-shadow: 0 0 0 1px #4e4e4e;
+        color: #999;
         &:hover {
             box-shadow: 0 0 0 1px #aaa;
         }
     }
 
     .kl-storage-preview__im {
-        box-shadow: 0 0 0 1px #5e5e5e;
+        box-shadow: 0 0 0 1px #4e4e4e;
     }
 
     .kl-info-btn {
-        box-shadow: inset 0 0 0 1px #ffff;
+        box-shadow: inset 0 0 0 1px #fff;
     }
 
     .kl-layer {
-        background: transparent;
-        border: 1px solid #4f4f4f;
+        background: rgba(255, 255, 255, 0.04);
+        border: none;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+
         .kl-layer__label,
         .kl-layer__opacity-label {
-            color: #ccc;
+            color: #bbb;
         }
     }
 
     .kl-layer--selected {
-        background: #505050;
-        border: 1px solid var(--active-highlight-color);
+        background: #464646;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+        box-shadow: inset 2px 0 0 var(--active-highlight-color);
 
         .kl-layer__label {
             color: #fff;
+            font-weight: 600;
         }
     }
 
     .kl-point-slider__line {
-        background: #777;
+        background: #666;
     }
 
     .kl-point-slider__point {
-        box-shadow: none;
+        box-shadow: 0 0 3px rgba(0, 0, 0, 0.8);
     }
 
     .kl-overlay-toolspace {
-        background: transparent;
-        border: none;
-        box-shadow: none;
+        background: var(--ui-bg-dark);
+        border: 1px solid #555;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.6);
     }
 
     .kl-overlay-toolspace__color {
-        box-shadow: 0 0 0 1px #6e6e6e;
+        box-shadow: 0 0 0 1px #5e5e5e;
     }
 
     .image-toggle {
         &:not(.image-toggle-active) {
+            box-shadow: rgba(255, 255, 255, 0.25) 0 0 0 1px;
             &:hover {
-                background: #606060;
-            }
-            &:active {
-                box-shadow: #838383 0 0 0 2px;
+                background: #505050;
             }
         }
     }
 
     .image-toggle-active {
-        background: #606060;
+        background: #505050;
+        box-shadow: var(--active-highlight-color) 0 0 0 2px;
     }
 
     .hr {
-        border-top: 1px solid #fff3;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .grid-hr {
-        border-top: 1px solid #fff3;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .kl-color-option {
-        box-shadow: 0 0 0 1px #7a7a7a;
+        box-shadow: 0 0 0 1px #666;
         &:not(.kl-color-option--active):active {
-            box-shadow: 0 0 0 2px #7a7a7a;
+            box-shadow: 0 0 0 2px #888;
         }
     }
 
@@ -546,11 +563,21 @@
     }
 
     .kl-text-error {
-        color: #ff3838;
+        color: #ff5555;
     }
 
     .kl-dropdown-menu {
         background: var(--ui-bg-dark);
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+
+        button:hover {
+            background: #505050;
+        }
+
+        button:active {
+            background: #404040;
+        }
     }
 
     .kl-pinch-overlay {
@@ -559,5 +586,78 @@
 
     .kl-floating-window-header {
         background: var(--ui-bg-dark);
+    }
+
+    // Panel section headers
+    .kl-panel-section-header {
+        color: var(--section-header-color);
+        background: var(--section-header-bg);
+        border-top-color: var(--panel-border);
+        border-bottom-color: var(--panel-border);
+    }
+
+    // Collapsible panel headers
+    .kl-panel-header {
+        background: rgba(0, 0, 0, 0.3);
+        border-top-color: rgba(255, 255, 255, 0.06);
+        border-bottom-color: rgba(0, 0, 0, 0.35);
+
+        &:hover {
+            background: rgba(0, 0, 0, 0.38);
+        }
+
+        &:active {
+            background: rgba(0, 0, 0, 0.45);
+        }
+    }
+
+    .kl-panel-header__title {
+        color: #aaa;
+    }
+
+    // Menu bar
+    .kl-menu-bar-btn {
+        color: #ccc;
+
+        &:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        &:active {
+            background: rgba(255, 255, 255, 0.06);
+        }
+
+        &.kl-menu-bar-btn--open {
+            background: rgba(255, 255, 255, 0.12);
+        }
+    }
+
+    .kl-menu-bar-dropdown {
+        background: #2e2e2e;
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .kl-menu-bar-item {
+        color: #ccc;
+
+        &:hover {
+            background: var(--active-highlight-color);
+            color: #fff;
+        }
+
+        &:active {
+            background: rgba(255, 255, 255, 0.06);
+            color: #fff;
+        }
+
+        &:disabled {
+            color: #555;
+        }
+    }
+
+    .kl-menu-bar-separator {
+        background: rgba(255, 255, 255, 0.1);
     }
 }

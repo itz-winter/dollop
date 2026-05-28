@@ -105,6 +105,23 @@ export class PointSlider {
                     }
                 },
             });
+
+            this.rootEl.addEventListener(
+                'wheel',
+                (e) => {
+                    e.preventDefault();
+                    if (p.getDoIgnore()) return;
+                    const step = (p.width - p.pointSize) * 0.04;
+                    sliderPos = BB.clamp(
+                        sliderPos + (e.deltaY > 0 ? -step : step),
+                        0,
+                        p.width - p.pointSize,
+                    );
+                    redrawPoint();
+                    p.callback(getValue(), true, true);
+                },
+                { passive: false },
+            );
         }
     }
 
